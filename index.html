@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+
+    <!-- Synchronous zero-CLS theme hydration adhering to Modern Web Guidance dark-mode-toggle -->
+    <script>
+      (function() {
+        try {
+          var stored = localStorage.getItem('wave-theme');
+          var theme = stored === 'light' ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch (e) {}
+      })();
+    </script>
+
+    <!-- Title & SEO Metadata -->
+    <title>Wave C. Ambray — Senior Full-Stack Software Engineer</title>
+    <meta
+      name="description"
+      content="Portfolio of Wave C. Ambray, Senior Full-Stack Software Engineer specializing in distributed .NET & TypeScript architectures, 100M+ spatial telemetry points, and healthcare enterprise platforms."
+    />
+    <meta name="author" content="Wave C. Ambray" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://waveambray.dev/" />
+
+    <!-- Favicon & PWA Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- OpenGraph Metadata -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Wave C. Ambray — Senior Full-Stack Software Engineer" />
+    <meta
+      property="og:description"
+      content="Distributed .NET &amp; TypeScript systems built for national scale. 6+ Yrs · 100M+ Spatial Points · 20K+ Users."
+    />
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+
+    <!-- Twitter / X Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Wave C. Ambray — Senior Full-Stack Software Engineer" />
+    <meta
+      name="twitter:description"
+      content="Distributed .NET &amp; TypeScript systems built for national scale. 6+ Yrs · 100M+ Spatial Points."
+    />
+    <meta name="twitter:image" content="/og-image.png" />
+
+    <!-- JSON-LD Person Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Wave C. Ambray",
+        "jobTitle": "Senior Full-Stack Software Engineer",
+        "email": "mailto:wacanam20@gmail.com",
+        "telephone": "+639654297640",
+        "url": "https://waveambray.dev",
+        "sameAs": [
+          "https://github.com/wacanam",
+          "https://linkedin.com/in/wave-ambray-a37736161"
+        ],
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Cagayan de Oro City",
+          "addressRegion": "Northern Mindanao",
+          "addressCountry": "PH"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
