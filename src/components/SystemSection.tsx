@@ -24,16 +24,17 @@ export const SystemSection: React.FC<SystemSectionProps> = ({ onOpenArchitecture
           return (
             <article
               key={system.id}
-              className="scroll-mt-28 flex flex-col items-start gap-8"
+              className="scroll-mt-28 reading-scrim rounded-3xl py-6 px-4 sm:px-6 -mx-4 sm:-mx-6 flex flex-col items-start gap-7"
               aria-labelledby={`heading-${system.id}`}
             >
-              {/* 1. Chapter Eyebrow */}
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-dock border border-[var(--border-hairline)]">
-                <span className="text-[10px] font-mono tracking-widest uppercase text-[var(--accent-titanium)] font-semibold">
+              {/* 1. Editorial Hairline Kicker */}
+              <div className="inline-flex items-center gap-3">
+                <span className="w-6 h-px bg-[var(--accent-titanium)]" aria-hidden="true" />
+                <span className="text-[11px] font-mono tracking-widest uppercase text-[var(--accent-titanium)] font-semibold">
                   {system.chapter}
                 </span>
                 <span className="text-xs text-[var(--border-subtle)]">·</span>
-                <span className="text-[10px] font-mono tracking-wider text-[var(--text-secondary)] uppercase">
+                <span className="text-[11px] font-mono tracking-wider text-[var(--text-secondary)] uppercase">
                   Flagship Architecture
                 </span>
               </div>
@@ -56,15 +57,17 @@ export const SystemSection: React.FC<SystemSectionProps> = ({ onOpenArchitecture
                 {system.subtitle}
               </p>
 
-              {/* 5. 4 Minimal Stack Tokens */}
-              <div className="flex flex-wrap items-center gap-2">
-                {tokens.map((token) => (
-                  <span
-                    key={token}
-                    className="px-3.5 py-1.5 rounded-full text-xs font-mono glass-dock text-[var(--text-secondary)] border border-[var(--border-hairline)]"
-                  >
-                    {token}
-                  </span>
+              {/* 5. Clean Typographic Monospace Stack Spec Line (zero pill chip clutter) */}
+              <div className="text-xs font-mono tracking-wide text-[var(--text-secondary)]">
+                {tokens.map((token, idx) => (
+                  <React.Fragment key={token}>
+                    {idx > 0 && (
+                      <span className="mx-2.5 text-[var(--border-subtle)]" aria-hidden="true">
+                        ·
+                      </span>
+                    )}
+                    <span>{token}</span>
+                  </React.Fragment>
                 ))}
               </div>
 

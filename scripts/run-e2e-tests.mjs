@@ -667,8 +667,8 @@ async function main() {
 
   await runTest('T2-BOUND-10', 'Hero statement word count strictly <= 16 words', 2, 'Word Economy', async () => {
     const heroCode = await safeReadFile(path.join(srcDir, 'components', 'Hero.tsx'));
-    assert.ok(heroCode.includes('Distributed .NET & TypeScript systems built for national scale') || heroCode.includes('Senior Full-Stack Engineer'), 'Hero statement text missing');
-    const heroStatement = 'Senior Full-Stack Engineer. Distributed .NET & TypeScript systems built for national scale.';
+    assert.ok(heroCode.includes('Distributed .NET & TypeScript systems built for national scale'), 'Hero statement text missing');
+    const heroStatement = 'Full-Stack Engineer. Distributed .NET & TypeScript systems built for national scale.';
     const words = countWords(heroStatement);
     assert.ok(words <= 16, `Hero statement has ${words} words, must be <= 16`);
   });
@@ -704,7 +704,9 @@ async function main() {
   });
 
   await runTest('T2-BOUND-15', 'Contact section subtitle word count strictly <= 16 words', 2, 'Word Economy', async () => {
-    const text = 'Direct executive channels for remote senior full-stack and backend architecture roles.';
+    const contactCode = await safeReadFile(path.join(srcDir, 'components', 'ContactCard.tsx'));
+    const text = 'Direct executive channels for remote full-stack and backend architecture roles.';
+    assert.ok(contactCode.includes(text), 'Contact section subtitle missing');
     const words = countWords(text);
     assert.ok(words <= 16, `Contact subtitle has ${words} words (expected <= 16)`);
   });

@@ -26,12 +26,13 @@ export const ExperienceSpec: React.FC<ExperienceSpecProps> = ({
 
       {/* Chapter Eyebrow & Header */}
       <div className="flex flex-col items-start gap-3 mb-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-dock border border-[var(--border-hairline)]">
-          <span className="text-[10px] font-mono tracking-widest uppercase text-[var(--accent-titanium)] font-semibold">
+        <div className="inline-flex items-center gap-3">
+          <span className="w-6 h-px bg-[var(--accent-titanium)]" aria-hidden="true" />
+          <span className="text-[11px] font-mono tracking-widest uppercase text-[var(--accent-titanium)] font-semibold">
             CHAPTER 05
           </span>
           <span className="text-xs text-[var(--border-subtle)]">·</span>
-          <span className="text-[10px] font-mono tracking-wider text-[var(--text-secondary)]">
+          <span className="text-[11px] font-mono tracking-wider text-[var(--text-secondary)]">
             TECHNICAL SPECIFICATION &amp; CHRONOLOGY
           </span>
         </div>
@@ -54,7 +55,7 @@ export const ExperienceSpec: React.FC<ExperienceSpecProps> = ({
             onClick={() => setActiveTab(cat.id)}
             className={`px-4 py-2 rounded-full text-xs font-mono tracking-wide transition-all ${
               activeTab === cat.id
-                ? 'bg-[var(--accent-titanium)] text-[#050507] font-semibold shadow-md'
+                ? 'bg-[var(--accent-titanium)] text-[var(--bg-primary)] font-semibold shadow-md'
                 : 'glass-dock text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--border-subtle)]'
             }`}
           >
@@ -65,7 +66,7 @@ export const ExperienceSpec: React.FC<ExperienceSpecProps> = ({
         {selectedSkill && (
           <button
             onClick={() => onSelectSkill(null)}
-            className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono text-[var(--accent-titanium)] bg-[var(--border-hairline)] border border-[var(--border-subtle)] hover:bg-[var(--border-subtle)] transition-colors"
+            className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono text-[var(--accent-titanium)] bg-[var(--surface-card)] border border-[var(--border-subtle)] hover:bg-[var(--surface-card-strong)] transition-colors"
           >
             <span>Highlighted: {selectedSkill}</span>
             <X className="w-3 h-3" />
@@ -91,8 +92,8 @@ export const ExperienceSpec: React.FC<ExperienceSpecProps> = ({
                 onClick={() => onSelectSkill(isSelected ? null : skill)}
                 className={`px-3 py-1.5 rounded-full text-xs font-mono transition-all duration-200 border ${
                   isSelected
-                    ? 'bg-[var(--accent-titanium)] text-[#050507] font-semibold border-[var(--accent-titanium)] shadow-md scale-105'
-                    : 'bg-[var(--border-hairline)] text-[var(--text-primary)] border-[var(--border-hairline)] hover:border-[var(--border-subtle)] hover:bg-[var(--border-subtle)]'
+                    ? 'bg-[var(--accent-titanium)] text-[var(--bg-primary)] font-semibold border-[var(--accent-titanium)] shadow-md scale-105'
+                    : 'bg-[var(--surface-card)] text-[var(--text-primary)] border-[var(--border-hairline)] hover:border-[var(--border-subtle)] hover:bg-[var(--surface-card-strong)]'
                 }`}
               >
                 {skill}

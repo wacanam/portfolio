@@ -3,16 +3,19 @@
 :root {
   color-scheme: dark;
   --bg-primary: #050507;
-  --bg-elevated: rgba(20, 22, 26, 0.72);
-  --bg-sheet: rgba(14, 16, 20, 0.85);
-  --border-hairline: rgba(255, 255, 255, 0.08);
-  --border-subtle: rgba(255, 255, 255, 0.14);
+  --bg-elevated: rgba(16, 18, 23, 0.88);
+  --bg-sheet: rgba(12, 14, 18, 0.96);
+  --surface-card: rgba(255, 255, 255, 0.055);
+  --surface-card-strong: rgba(255, 255, 255, 0.095);
+  --border-hairline: rgba(255, 255, 255, 0.09);
+  --border-subtle: rgba(255, 255, 255, 0.16);
   --text-primary: #F5F5F7;
-  --text-secondary: #86868B;
-  --text-tertiary: #52525B;
+  --text-secondary: #A1A1AA;
+  --text-tertiary: #71717A;
   --accent-titanium: #D6C5A9;
   --accent-signal: #10B981;
   --headline-gradient: linear-gradient(180deg, #FFFFFF 0%, #A1A1AA 100%);
+  --scrim-radial: radial-gradient(ellipse 72% 58% at 50% 48%, rgba(5, 5, 7, 0.86) 0%, rgba(5, 5, 7, 0.52) 58%, transparent 100%);
   --glass-blur: blur(24px) saturate(180%);
   --glass-sheet-blur: blur(28px) saturate(180%);
 }
@@ -20,16 +23,19 @@
 html[data-theme="light"] {
   color-scheme: light;
   --bg-primary: #F5F5F7;
-  --bg-elevated: rgba(255, 255, 255, 0.78);
-  --bg-sheet: rgba(255, 255, 255, 0.88);
-  --border-hairline: rgba(0, 0, 0, 0.08);
-  --border-subtle: rgba(0, 0, 0, 0.14);
+  --bg-elevated: rgba(255, 255, 255, 0.90);
+  --bg-sheet: rgba(252, 252, 254, 0.97);
+  --surface-card: rgba(0, 0, 0, 0.038);
+  --surface-card-strong: rgba(0, 0, 0, 0.07);
+  --border-hairline: rgba(0, 0, 0, 0.09);
+  --border-subtle: rgba(0, 0, 0, 0.16);
   --text-primary: #1D1D1F;
-  --text-secondary: #6E6E73;
-  --text-tertiary: #9CA3AF;
+  --text-secondary: #48484A;
+  --text-tertiary: #6E6E73;
   --accent-titanium: #7A6240;
   --accent-signal: #059669;
   --headline-gradient: linear-gradient(180deg, #1D1D1F 0%, #515154 100%);
+  --scrim-radial: radial-gradient(ellipse 72% 58% at 50% 48%, rgba(245, 245, 247, 0.90) 0%, rgba(245, 245, 247, 0.58) 58%, transparent 100%);
   --glass-blur: blur(24px) saturate(180%);
   --glass-sheet-blur: blur(28px) saturate(180%);
 }
@@ -69,27 +75,16 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* Apple Frosted Glass Utilities */
-.glass-dock {
-  background: var(--bg-elevated);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--border-hairline);
+/* Quiet radial scrim protecting center-column typography over particle canvas */
+.reading-scrim {
+  background: var(--scrim-radial);
 }
 
-.glass-sheet {
-  background: var(--bg-sheet);
-  backdrop-filter: var(--glass-sheet-blur);
-  -webkit-backdrop-filter: var(--glass-sheet-blur);
-  border: 1px solid var(--border-hairline);
-}
-
-/* Native dialog styling abiding by modern-web-guidance */
+/* Native dialog styling abiding by modern-web-guidance (placed before .glass-sheet so dialog.glass-sheet wins specificity) */
 dialog:modal {
   overscroll-behavior: contain;
   border: none;
   padding: 0;
-  background: transparent;
   color: var(--text-primary);
   max-width: 100vw;
   max-height: 100vh;
@@ -98,9 +93,29 @@ dialog:modal {
 dialog::backdrop {
   overflow: hidden;
   overscroll-behavior: contain;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(3, 4, 8, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+html[data-theme="light"] dialog::backdrop {
+  background: rgba(15, 17, 22, 0.48);
+}
+
+/* Apple Frosted Glass Utilities */
+.glass-dock {
+  background: var(--bg-elevated);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-hairline);
+}
+
+dialog.glass-sheet,
+.glass-sheet {
+  background: var(--bg-sheet);
+  backdrop-filter: var(--glass-sheet-blur);
+  -webkit-backdrop-filter: var(--glass-sheet-blur);
+  border: 1px solid var(--border-subtle);
 }
 
 /* Container query responsive table container */

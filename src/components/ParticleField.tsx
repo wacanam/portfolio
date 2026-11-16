@@ -100,6 +100,10 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ activeFormation, t
             { r: 5, g: 150, b: 105 },   // Emerald #059669
           ];
 
+      const coreAlpha = isDark ? 0.82 : 0.42;
+      const midAlpha = isDark ? 0.48 : 0.22;
+      const outerAlpha = isDark ? 0.14 : 0.06;
+
       for (let s = 0; s < 3; s++) {
         const offscreen = sprites[s];
         const offCtx = offscreen.getContext('2d');
@@ -107,9 +111,9 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ activeFormation, t
           offCtx.clearRect(0, 0, 16, 16);
           const { r, g, b } = palette[s];
           const grad = offCtx.createRadialGradient(8, 8, 0, 8, 8, 8);
-          grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 1.0)`);
-          grad.addColorStop(0.35, `rgba(${r}, ${g}, ${b}, 0.75)`);
-          grad.addColorStop(0.7, `rgba(${r}, ${g}, ${b}, 0.25)`);
+          grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${coreAlpha})`);
+          grad.addColorStop(0.35, `rgba(${r}, ${g}, ${b}, ${midAlpha})`);
+          grad.addColorStop(0.7, `rgba(${r}, ${g}, ${b}, ${outerAlpha})`);
           grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.0)`);
           offCtx.fillStyle = grad;
           offCtx.fillRect(0, 0, 16, 16);
@@ -199,10 +203,11 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ activeFormation, t
 
     const updateTargetPositions = (formation: number, timeSec: number) => {
       const isMobile = width < 768;
+      const minDim = Math.min(width, height);
 
       if (formation === 0) {
-        // Formation 0: Fibonacci Orbital Sphere
-        const R0 = isMobile ? 150 : 220;
+        // Formation 0: Fibonacci Orbital Sphere (expanded perimeter framing reading column)
+        const R0 = isMobile ? Math.max(200, minDim * 0.46) : Math.max(290, Math.min(410, minDim * 0.42));
         const yaw = prefersReducedMotion ? 0 : timeSec * 0.16;
         const cosYaw = Math.cos(yaw);
         const sinYaw = Math.sin(yaw);
@@ -232,8 +237,8 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ activeFormation, t
         // Formation 1: Topographic Elevation Wave (Archipelago terrain grid)
         const cols = isMobile ? 30 : 45;
         const rows = Math.ceil(activeCount / cols);
-        const wMesh = isMobile ? 380 : 680;
-        const dMesh = isMobile ? 280 : 440;
+        const wMesh = isMobile ? Math.max(420, width * 0.95) : Math.max(780, width * 0.72);
+        const dMesh = isMobile ? 320 : 480;
         const alphaX = 0.87; // ~50 deg pitch
         const cosAlpha = Math.cos(alphaX);
         const sinAlpha = Math.sin(alphaX);
@@ -266,12 +271,12 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ activeFormation, t
         const outerCount = Math.floor(activeCount * 0.6);
         const innerCount = activeCount - outerCount;
 
-        const R1 = isMobile ? 150 : 210;
-        const r1 = isMobile ? 32 : 45;
+        const R1 = isMobile ? Math.max(185, minDim * 0.42) : Math.max(270, minDim * 0.36);
+        const r1 = isMobile ? 34 : 46;
         const omega1 = prefersReducedMotion ? 0 : timeSec * 0.22;
 
-        const R2 = isMobile ? 85 : 115;
-        const r2 = isMobile ? 18 : 26;
+        const R2 = R1 * 0.56;
+        const r2 = isMobile ? 20 : 28;
         const omega2 = prefersReducedMotion ? 0 : -timeSec * 0.38;
         const gamma = 0.60; // ~35 deg tilt
         const cosGamma = Math.cos(gamma);
@@ -304,7 +309,7 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ activeFormation, t
       } else {
         // Formation 3: Crystalline State Lattice (Deterministic cubic matrix)
         const L = isMobile ? 9 : 11;
-        const spacing = isMobile ? 22 : 32;
+        const spacing = isMobile ? 28 : 40;
         const halfL = (L - 1) / 2;
 
         const thetaY = Math.PI / 4;
@@ -442,8 +447,20 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ activeFormation, t
           ? 0.85 + 0.15 * Math.sin(timeSec * 0.8 + phaseOffset[i])
           : 1.0;
 
-        const drawSize = Math.max(3.5, Math.min(16, 8 * perspective * baseScale[i] * breathe));
-        const alpha = Math.max(0.15, Math.min(1.0, (0.25 + 0.65 * perspective) * (prefersReducedMotion ? 0.75 : 1.0)));
+        const drawSize = Math.max(2.2, Math.min(8.5, 5.4 * perspective * baseScale[i] * breathe));
+
+        // Attenuate particle brightness behind the center reading column so typography stays clear
+        const isMobile = width < 768;
+        const rx = isMobile ? width * 0.44 : Math.min(480, width * 0.36);
+        const ry = isMobile ? height * 0.28 : Math.min(250, height * 0.30);
+        const ndx = (screenX - centerX) / Math.max(1, rx);
+        const ndy = (screenY - centerY) / Math.max(1, ry);
+        const rNorm = Math.min(1, Math.hypot(ndx, ndy));
+        const smooth = rNorm * rNorm * (3 - 2 * rNorm);
+        const centerAttenuation = 0.16 + 0.84 * smooth;
+        const themeCap = appliedTheme === 'dark' ? 0.58 : 0.34;
+        const baseAlpha = Math.min(themeCap, (0.14 + 0.48 * perspective) * (prefersReducedMotion ? 0.75 : 1.0));
+        const alpha = Math.max(0.04, baseAlpha * centerAttenuation);
 
         // 6. Draw Pre-Rendered Offscreen Sprite Canvas (Zero per-frame allocations)
         const sprite = sprites[spriteType[i]] || sprites[0];

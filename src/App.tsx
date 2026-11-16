@@ -126,7 +126,7 @@ export const App: React.FC = () => {
       {/* Footer */}
       <footer className="relative z-10 py-12 px-6 text-center text-xs text-[var(--text-tertiary)] font-mono border-t border-[var(--border-hairline)] select-none">
         <p>
-          Wave C. Ambray · Senior Full-Stack Software Engineer
+          Wave C. Ambray · Full-Stack Software Engineer
         </p>
         <p className="mt-1 opacity-70">
           Engineered with generous negative space &amp; zero heavy 3D dependencies.

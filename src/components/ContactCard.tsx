@@ -26,24 +26,26 @@ export const ContactCard: React.FC = () => {
 
   return (
     <section id="contact" className="relative py-28 px-6 max-w-5xl mx-auto select-none">
-      <div className="flex flex-col items-center text-center gap-3 mb-14">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-dock border border-[var(--border-hairline)]">
-          <span className="text-[10px] font-mono tracking-widest uppercase text-[var(--accent-titanium)] font-semibold">
+      <div className="reading-scrim rounded-3xl py-4 px-4 flex flex-col items-center text-center gap-3 mb-12">
+        <div className="inline-flex items-center gap-3">
+          <span className="w-6 h-px bg-[var(--accent-titanium)]" aria-hidden="true" />
+          <span className="text-[11px] font-mono tracking-widest uppercase text-[var(--accent-titanium)] font-semibold">
             CHAPTER 06
           </span>
           <span className="text-xs text-[var(--border-subtle)]">·</span>
-          <span className="text-[10px] font-mono tracking-wider text-[var(--text-secondary)]">
+          <span className="text-[11px] font-mono tracking-wider text-[var(--text-secondary)]">
             EXECUTIVE COORDINATES
           </span>
+          <span className="w-6 h-px bg-[var(--accent-titanium)]" aria-hidden="true" />
         </div>
 
         <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-metallic">
           Initiate Direct Collaboration
         </h2>
 
-        {/* Subtitle with verified Radical Word Economy (11 words <= 16 words) */}
+        {/* Subtitle with verified Radical Word Economy (10 words <= 16 words) */}
         <p className="text-base sm:text-lg text-[var(--text-secondary)] max-w-xl leading-relaxed">
-          Direct executive channels for remote senior full-stack and backend architecture roles.
+          {'Direct executive channels for remote full-stack and backend architecture roles.'}
         </p>
       </div>
 
@@ -96,7 +98,7 @@ export const ContactCard: React.FC = () => {
                 {contactData.name}
               </h3>
               <p className="text-xs text-[var(--text-secondary)] font-mono mt-0.5">
-                Senior Full-Stack &amp; Backend Engineer
+                Full-Stack &amp; Backend Engineer
               </p>
             </div>
           </div>

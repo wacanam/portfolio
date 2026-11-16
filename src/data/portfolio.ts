@@ -2,7 +2,7 @@ import { CareerRow, FlagshipSystem, SkillCategory, ContactInfo } from '../types'
 
 export const contactData: ContactInfo = {
   name: 'Wave C. Ambray',
-  headline: 'Senior Full-Stack & Backend Software Engineer',
+  headline: 'Full-Stack & Backend Software Engineer',
   email: 'wacanam20@gmail.com',
   phone: '+63 965 429 7640',
   whatsappUrl: 'https://wa.me/639654297640',

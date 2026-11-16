@@ -278,7 +278,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
     >
       <div className="flex flex-col max-h-[80vh] overflow-hidden">
         {/* Search Input Bar */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--border-hairline)] bg-[var(--border-hairline)]">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--border-hairline)] bg-[var(--surface-card)]">
           <Search className="w-5 h-5 text-[var(--accent-titanium)] shrink-0" />
           <input
             ref={inputRef}
@@ -300,7 +300,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
               <X className="w-4 h-4" />
             </button>
           )}
-          <kbd className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono text-[var(--text-tertiary)] bg-[var(--border-subtle)] rounded border border-[var(--border-subtle)]">
+          <kbd className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono text-[var(--text-tertiary)] bg-[var(--surface-card-strong)] rounded border border-[var(--border-subtle)]">
             ESC
           </kbd>
         </div>
@@ -321,12 +321,12 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
                   onMouseEnter={() => setSelectedIndex(idx)}
                   className={`w-full text-left px-3.5 py-3 rounded-2xl flex items-center justify-between gap-3 transition-colors ${
                     isSelected
-                      ? 'bg-[var(--border-subtle)] text-[var(--text-primary)] shadow-sm'
-                      : 'text-[var(--text-secondary)] hover:bg-[var(--border-hairline)] hover:text-[var(--text-primary)]'
+                      ? 'bg-[var(--surface-card-strong)] text-[var(--text-primary)] shadow-sm'
+                      : 'text-[var(--text-secondary)] hover:bg-[var(--surface-card)] hover:text-[var(--text-primary)]'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="p-2 rounded-xl glass-dock shrink-0">
+                    <div className="p-2 rounded-xl bg-[var(--surface-card)] border border-[var(--border-hairline)] shrink-0">
                       {item.icon}
                     </div>
                     <div className="min-w-0">
@@ -339,7 +339,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
                     </div>
                   </div>
 
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-tertiary)] shrink-0 px-2 py-0.5 rounded bg-[var(--border-hairline)] border border-[var(--border-hairline)]">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-tertiary)] shrink-0 px-2 py-0.5 rounded bg-[var(--surface-card)] border border-[var(--border-hairline)]">
                     {item.category}
                   </span>
                 </button>
@@ -349,7 +349,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
         </div>
 
         {/* Footer shortcuts helper */}
-        <div className="px-5 py-2.5 border-t border-[var(--border-hairline)] flex items-center justify-between text-[11px] font-mono text-[var(--text-tertiary)] bg-[var(--border-hairline)]">
+        <div className="px-5 py-2.5 border-t border-[var(--border-hairline)] flex items-center justify-between text-[11px] font-mono text-[var(--text-tertiary)] bg-[var(--surface-card)]">
           <div className="flex items-center gap-3">
             <span>↑↓ Navigate</span>
             <span>↵ Select</span>

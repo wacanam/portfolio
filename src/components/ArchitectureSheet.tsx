@@ -98,7 +98,7 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({ system, on
             {cachedSystem.metrics.map((m) => (
               <div
                 key={m.label}
-                className="p-3.5 rounded-2xl bg-[var(--border-hairline)] border border-[var(--border-hairline)] flex flex-col justify-between"
+                className="p-3.5 rounded-2xl bg-[var(--surface-card)] border border-[var(--border-subtle)] flex flex-col justify-between"
               >
                 <span className="text-xl sm:text-2xl font-bold font-mono-numbers text-[var(--text-primary)]">
                   {m.value}
@@ -111,7 +111,7 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({ system, on
           </div>
 
           {/* 5-Node Interactive Architecture Pipeline Diagram */}
-          <div className="rounded-2xl p-4.5 sm:p-5 bg-[var(--border-hairline)] border border-[var(--border-hairline)] mb-6">
+          <div className="rounded-2xl p-4.5 sm:p-5 bg-[var(--surface-card)] border border-[var(--border-subtle)] mb-6">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-[var(--border-hairline)]">
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-titanium)] font-semibold">
                 <Layers className="w-3.5 h-3.5" />
@@ -132,8 +132,8 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({ system, on
                     onClick={() => setActiveNodeIdx(idx)}
                     className={`text-left p-3 rounded-xl transition-all border ${
                       isSelected
-                        ? 'bg-[var(--accent-titanium)] text-[#050507] font-semibold border-[var(--accent-titanium)] shadow-sm'
-                        : 'bg-[var(--border-hairline)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border-[var(--border-hairline)]'
+                        ? 'bg-[var(--accent-titanium)] text-[var(--bg-primary)] font-semibold border-[var(--accent-titanium)] shadow-sm'
+                        : 'bg-[var(--surface-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border-[var(--border-subtle)]'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
@@ -141,7 +141,7 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({ system, on
                         0{idx + 1}
                       </span>
                       {idx < 4 && (
-                        <ArrowRight className="w-3 h-3 text-[var(--text-tertiary)] hidden sm:block opacity-60" />
+                        <ArrowRight className={`w-3 h-3 hidden sm:block ${isSelected ? 'opacity-80' : 'text-[var(--text-tertiary)] opacity-60'}`} />
                       )}
                     </div>
                     <div className="text-xs font-medium truncate">
@@ -154,7 +154,7 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({ system, on
 
             {/* Active Node Detail Inspector */}
             {activeNode && (
-              <div className="p-4 rounded-xl bg-[var(--border-subtle)] text-xs text-[var(--text-secondary)]">
+              <div className="p-4 rounded-xl bg-[var(--surface-card-strong)] border border-[var(--border-subtle)] text-xs text-[var(--text-secondary)]">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2 pb-2 border-b border-[var(--border-hairline)]">
                   <div className="font-semibold text-[var(--text-primary)]">
                     {activeNode.name} · <span className="text-[var(--accent-titanium)]">{activeNode.tech}</span>
@@ -175,7 +175,7 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({ system, on
           {/* Deep Architectural Specifications */}
           <div className="space-y-4 text-sm">
             {/* Challenge */}
-            <div className="rounded-2xl p-4.5 bg-[var(--border-hairline)] border border-[var(--border-hairline)]">
+            <div className="rounded-2xl p-4.5 bg-[var(--surface-card)] border border-[var(--border-subtle)]">
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-titanium)] mb-2 font-semibold">
                 <Shield className="w-3.5 h-3.5" />
                 <span>Production Challenge</span>
@@ -186,7 +186,7 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({ system, on
             </div>
 
             {/* Architecture Solution */}
-            <div className="rounded-2xl p-4.5 bg-[var(--border-hairline)] border border-[var(--border-hairline)]">
+            <div className="rounded-2xl p-4.5 bg-[var(--surface-card)] border border-[var(--border-subtle)]">
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-titanium)] mb-2 font-semibold">
                 <Layers className="w-3.5 h-3.5" />
                 <span>Distributed Architecture Solution</span>
@@ -197,7 +197,7 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({ system, on
             </div>
 
             {/* Scalability */}
-            <div className="rounded-2xl p-4.5 bg-[var(--border-hairline)] border border-[var(--border-hairline)]">
+            <div className="rounded-2xl p-4.5 bg-[var(--surface-card)] border border-[var(--border-subtle)]">
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-titanium)] mb-2 font-semibold">
                 <Cpu className="w-3.5 h-3.5" />
                 <span>Scalability &amp; Reliability Strategy</span>
@@ -208,7 +208,7 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({ system, on
             </div>
 
             {/* Verified Production Outcome */}
-            <div className="rounded-2xl p-4.5 bg-[var(--border-hairline)] border border-[var(--border-hairline)]">
+            <div className="rounded-2xl p-4.5 bg-[var(--surface-card)] border border-[var(--border-subtle)]">
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-signal)] mb-2 font-semibold">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Verified Production Outcome</span>
