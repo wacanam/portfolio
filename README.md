@@ -2,6 +2,8 @@
 
 Minimal, Apple Pro–inspired Single Page Application portfolio for **Wave C. Ambray** (Senior Full-Stack Software Engineer).
 
+- **Live Site:** https://wacanam.github.io/portfolio/
+
 ## Stack
 
 - **UI & Build:** React 19, TypeScript, Vite 6, Tailwind CSS 4, `lucide-react`

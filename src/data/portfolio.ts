@@ -11,7 +11,7 @@ export const contactData: ContactInfo = {
   linkedinUrl: 'https://linkedin.com/in/wave-ambray-a37736161',
   location: 'Cagayan de Oro City, Northern Mindanao, Philippines (UTC+8)',
   availability: 'Available for Remote Roles Worldwide',
-  resumeUrl: '/wave_ambray_resume.pdf',
+  resumeUrl: `${import.meta.env.BASE_URL}wave_ambray_resume.pdf`,
 };
 
 export const flagshipSystems: FlagshipSystem[] = [
