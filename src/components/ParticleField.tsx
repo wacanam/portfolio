@@ -6,9 +6,11 @@ export interface ParticleFieldProps {
 }
 
 const GRID_SPACING = 28;
-const FIDUCIAL_STRIDE = 4; // Crosshair fiducial every 112px
-const LOUPE_RADIUS = 210;
+const FIDUCIAL_STRIDE = 4; // Crosshair accent every 4th intersection (112px min)
+const LOUPE_RADIUS = 195;
 const MAX_MOTES = 56;
+const MAX_GRID_DESKTOP = 1320;
+const MAX_GRID_MOBILE = 560;
 
 interface RippleEvent {
   x: number;
@@ -42,10 +44,6 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
     let isVisible = document.visibilityState !== 'hidden';
     let prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Pre-allocated offscreen resting blueprint surface
-    const baseGridCanvas = document.createElement('canvas');
-    const baseGridCtx = baseGridCanvas.getContext('2d');
-
     // Pre-allocate 3 16x16 offscreen radial sprite canvases (zero per-frame allocations)
     const sprites: HTMLCanvasElement[] = [
       document.createElement('canvas'),
@@ -57,7 +55,19 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
       sprites[s].height = 16;
     }
 
-    // Ring buffer for sparse cursor micro-particle wake (<= 56 live motes)
+    // Pattern grid TypedArrays
+    let gridCount = 0;
+    let homeX = new Float32Array(0);
+    let homeY = new Float32Array(0);
+    let curX = new Float32Array(0);
+    let curY = new Float32Array(0);
+    let vx = new Float32Array(0);
+    let vy = new Float32Array(0);
+    let phase = new Float32Array(0);
+    let nodeType = new Uint8Array(0);
+    let isFiducial = new Uint8Array(0);
+
+    // Sparse cursor micro-particle wake ring buffer (<= 56 motes)
     const moteX = new Float32Array(MAX_MOTES);
     const moteY = new Float32Array(MAX_MOTES);
     const moteVx = new Float32Array(MAX_MOTES);
@@ -70,7 +80,7 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
 
     for (let i = 0; i < MAX_MOTES; i++) {
       moteSpawn[i] = -100;
-      moteLife[i] = 0.65;
+      moteLife[i] = 0.6;
     }
 
     const ripples: RippleEvent[] = [];
@@ -101,7 +111,7 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
           ];
 
       const coreAlpha = isDark ? 0.92 : 0.72;
-      const midAlpha = isDark ? 0.45 : 0.34;
+      const midAlpha = isDark ? 0.44 : 0.32;
 
       for (let s = 0; s < 3; s++) {
         const offCtx = sprites[s].getContext('2d');
@@ -110,60 +120,61 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
           const { r, g, b } = palette[s];
           const grad = offCtx.createRadialGradient(8, 8, 0, 8, 8, 8);
           grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${coreAlpha})`);
-          grad.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, ${midAlpha})`);
+          grad.addColorStop(0.42, `rgba(${r}, ${g}, ${b}, ${midAlpha})`);
           grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.0)`);
           offCtx.fillStyle = grad;
           offCtx.fillRect(0, 0, 16, 16);
         }
       }
+      appliedTheme = isDark ? 'dark' : 'light';
     };
 
-    const buildBaseGrid = (isDark: boolean) => {
-      if (!baseGridCtx) return;
+    const rebuildGrid = () => {
+      const maxNodes = width < 768 ? MAX_GRID_MOBILE : MAX_GRID_DESKTOP;
+      const spacing = Math.max(GRID_SPACING, Math.ceil(Math.sqrt((width * height) / maxNodes)));
+      const offsetX = (width % spacing) / 2;
+      const offsetY = (height % spacing) / 2;
+      const cols = Math.floor((width - offsetX) / spacing) + 1;
+      const rows = Math.floor((height - offsetY) / spacing) + 1;
+      const total = cols * rows;
 
-      baseGridCanvas.width = Math.round(width * dpr);
-      baseGridCanvas.height = Math.round(height * dpr);
-      baseGridCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      baseGridCtx.clearRect(0, 0, width, height);
+      gridCount = total;
+      homeX = new Float32Array(total);
+      homeY = new Float32Array(total);
+      curX = new Float32Array(total);
+      curY = new Float32Array(total);
+      vx = new Float32Array(total);
+      vy = new Float32Array(total);
+      phase = new Float32Array(total);
+      nodeType = new Uint8Array(total);
+      isFiducial = new Uint8Array(total);
 
-      const dotColor = isDark ? 'rgba(245, 245, 247, 0.045)' : 'rgba(29, 29, 31, 0.05)';
-      const fiducialColor = isDark ? 'rgba(214, 197, 169, 0.085)' : 'rgba(122, 98, 64, 0.085)';
-
-      const offsetX = (width % GRID_SPACING) / 2;
-      const offsetY = (height % GRID_SPACING) / 2;
-      const cols = Math.floor((width - offsetX) / GRID_SPACING) + 1;
-      const rows = Math.floor((height - offsetY) / GRID_SPACING) + 1;
-
-      baseGridCtx.fillStyle = dotColor;
+      let idx = 0;
       for (let r = 0; r < rows; r++) {
-        const y = offsetY + r * GRID_SPACING;
+        const y = offsetY + r * spacing;
         for (let c = 0; c < cols; c++) {
-          const x = offsetX + c * GRID_SPACING;
-          if (r % FIDUCIAL_STRIDE === 0 && c % FIDUCIAL_STRIDE === 0) continue;
-          baseGridCtx.fillRect(Math.round(x), Math.round(y), 1, 1);
-        }
-      }
+          const x = offsetX + c * spacing;
+          homeX[idx] = x;
+          homeY[idx] = y;
+          curX[idx] = x;
+          curY[idx] = y;
+          phase[idx] = (r * 0.55 + c * 0.35) % (Math.PI * 2);
 
-      // Draw crisp 112px fiducial crosshairs using rects (zero lineTo)
-      baseGridCtx.fillStyle = fiducialColor;
-      for (let r = 0; r < rows; r += FIDUCIAL_STRIDE) {
-        const y = Math.round(offsetY + r * GRID_SPACING);
-        for (let c = 0; c < cols; c += FIDUCIAL_STRIDE) {
-          const x = Math.round(offsetX + c * GRID_SPACING);
-          baseGridCtx.fillRect(x - 2, y, 5, 1);
-          baseGridCtx.fillRect(x, y - 2, 1, 5);
+          const fid = r % FIDUCIAL_STRIDE === 0 && c % FIDUCIAL_STRIDE === 0;
+          isFiducial[idx] = fid ? 1 : 0;
+
+          if (fid) {
+            nodeType[idx] = 1; // Subtle Champagne fiducial intersection
+          } else {
+            const hash = Math.abs(Math.sin(r * 12.9898 + c * 78.233) * 43758.5453) % 1;
+            nodeType[idx] = hash < 0.78 ? 0 : hash < 0.94 ? 1 : 2;
+          }
+          idx++;
         }
       }
     };
 
-    const syncThemeBuffers = () => {
-      const isDark = themeRef.current === 'dark';
-      createSprites(isDark);
-      buildBaseGrid(isDark);
-      appliedTheme = themeRef.current;
-    };
-
-    const spawnMote = (x: number, y: number, dx: number, dy: number, nowSec: number, typeRoll?: number) => {
+    const spawnMote = (x: number, y: number, dx: number, dy: number, nowSec: number) => {
       const i = moteCursor;
       moteCursor = (moteCursor + 1) % MAX_MOTES;
 
@@ -171,9 +182,9 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
       const nx = dx / dist;
       const ny = dy / dist;
       const curl = (Math.random() - 0.5) * 1.4;
-      const speed = 0.25 + Math.random() * 0.45;
+      const speed = 0.28 + Math.random() * 0.45;
 
-      // Tangential swirl + drift aligned with pointer vector
+      // Tangential swirl + subtle drift aligned with cursor travel vector
       const swirlX = -ny * curl + nx * speed;
       const swirlY = nx * curl + ny * speed;
 
@@ -182,14 +193,10 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
       moteVx[i] = swirlX;
       moteVy[i] = swirlY;
       moteSpawn[i] = nowSec;
-      moteLife[i] = 0.55 + Math.random() * 0.25;
-      moteSize[i] = 4.2 + Math.random() * 3.4;
-      if (typeRoll !== undefined) {
-        moteType[i] = typeRoll;
-      } else {
-        const r = Math.random();
-        moteType[i] = r < 0.72 ? 1 : r < 0.9 ? 0 : 2;
-      }
+      moteLife[i] = 0.52 + Math.random() * 0.24;
+      moteSize[i] = 4.0 + Math.random() * 3.0;
+      const r = Math.random();
+      moteType[i] = r < 0.72 ? 1 : r < 0.9 ? 0 : 2;
     };
 
     const stopLoop = () => {
@@ -206,120 +213,136 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
       }
 
       const nowSec = nowMs / 1000;
+      const isDark = themeRef.current === 'dark';
 
       if (themeRef.current !== appliedTheme) {
-        syncThemeBuffers();
+        createSprites(isDark);
       }
 
       const modalOpen = isModalOpenRef.current;
-      const loupeTarget = hasPointer && !modalOpen ? 1 : 0;
+      const loupeTarget = hasPointer && !modalOpen && !prefersReducedMotion ? 1 : 0;
       loupeStrength += (loupeTarget - loupeStrength) * 0.14;
 
-      // Prune expired ripples in-place (duration 0.9s)
+      // Prune expired ripples cleanly
       let activeRipples = 0;
       for (let r = 0; r < ripples.length; r++) {
         const age = nowSec - ripples[r].t0;
-        if (age >= 0 && age < 0.9) {
+        if (age >= 0 && age < 0.95) {
           ripples[activeRipples++] = ripples[r];
         }
       }
       ripples.length = activeRipples;
 
-      // Blit static pre-rendered blueprint matrix
       ctx.clearRect(0, 0, width, height);
-      ctx.globalAlpha = 1.0;
-      ctx.drawImage(baseGridCanvas, 0, 0, width, height);
 
-      const offsetX = (width % GRID_SPACING) / 2;
-      const offsetY = (height % GRID_SPACING) / 2;
-      const cols = Math.floor((width - offsetX) / GRID_SPACING) + 1;
-      const rows = Math.floor((height - offsetY) / GRID_SPACING) + 1;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const invRx = 1 / Math.max(1, width * 0.42);
+      const invRy = 1 / Math.max(1, height * 0.36);
 
-      // Interactive Cursor Blueprint Loupe (local bounding box only)
-      if (loupeStrength > 0.01 && ptrX > -9000 && !modalOpen) {
-        const minCol = Math.max(0, Math.floor((ptrX - LOUPE_RADIUS - offsetX) / GRID_SPACING));
-        const maxCol = Math.min(cols - 1, Math.ceil((ptrX + LOUPE_RADIUS - offsetX) / GRID_SPACING));
-        const minRow = Math.max(0, Math.floor((ptrY - LOUPE_RADIUS - offsetY) / GRID_SPACING));
-        const maxRow = Math.min(rows - 1, Math.ceil((ptrY + LOUPE_RADIUS - offsetY) / GRID_SPACING));
+      const hasActiveLoupe = loupeStrength > 0.01 && ptrX > -9000 && !modalOpen && !prefersReducedMotion;
+      const stiffness = 0.068;
+      const damping = 0.85;
 
-        const champagneSprite = sprites[1];
-        for (let r = minRow; r <= maxRow; r++) {
-          const gy = offsetY + r * GRID_SPACING;
-          for (let c = minCol; c <= maxCol; c++) {
-            const gx = offsetX + c * GRID_SPACING;
-            const dx = gx - ptrX;
-            const dy = gy - ptrY;
-            const dist = Math.hypot(dx, dy);
+      // Render animated coordinate lattice + cursor repulsion + tap ripple deflection via ctx.drawImage
+      for (let i = 0; i < gridCount; i++) {
+        const hx = homeX[i];
+        const hy = homeY[i];
 
-            if (dist < LOUPE_RADIUS) {
-              const t = 1 - dist / LOUPE_RADIUS;
-              const falloff = t * t * (3 - 2 * t) * loupeStrength;
-              const push = prefersReducedMotion || dist < 1 ? 0 : (dx / dist) * falloff * 3.2;
-              const pushY = prefersReducedMotion || dist < 1 ? 0 : (dy / dist) * falloff * 3.2;
-              const isFiducial = r % FIDUCIAL_STRIDE === 0 && c % FIDUCIAL_STRIDE === 0;
-              const dotSize = (isFiducial ? 5.8 : 4.2) + falloff * 2.4;
+        // Subtle continuous harmonic lattice drift
+        let waveX = 0;
+        let waveY = 0;
+        if (!prefersReducedMotion) {
+          waveX =
+            Math.sin(hy * 0.011 + nowSec * 0.68 + phase[i] * 0.25) * 2.5 +
+            Math.cos((hx + hy) * 0.007 - nowSec * 0.44) * 1.4;
+          waveY =
+            Math.cos(hx * 0.011 + nowSec * 0.60 + phase[i] * 0.25) * 2.5 +
+            Math.sin((hx - hy) * 0.007 + nowSec * 0.39) * 1.4;
+        }
 
-              ctx.globalAlpha = Math.min(0.42, (isFiducial ? 0.34 : 0.25) * falloff + 0.02);
-              ctx.drawImage(
-                champagneSprite,
-                Math.round(gx + push - dotSize / 2),
-                Math.round(gy + pushY - dotSize / 2),
-                Math.round(dotSize),
-                Math.round(dotSize)
-              );
-            }
+        const targetX = hx + waveX;
+        const targetY = hy + waveY;
+
+        vx[i] = (vx[i] + stiffness * (targetX - curX[i])) * damping;
+        vy[i] = (vy[i] + stiffness * (targetY - curY[i])) * damping;
+
+        // Cursor repulsion + soft tangential swirl
+        let loupeFalloff = 0;
+        if (hasActiveLoupe) {
+          const dx = curX[i] - ptrX;
+          const dy = curY[i] - ptrY;
+          const dist = Math.hypot(dx, dy);
+
+          if (dist < LOUPE_RADIUS && dist > 1) {
+            const t = 1 - dist / LOUPE_RADIUS;
+            loupeFalloff = t * t * (3 - 2 * t) * loupeStrength;
+            const nx = dx / dist;
+            const ny = dy / dist;
+            const swirlX = -ny * 1.15 * loupeFalloff;
+            const swirlY = nx * 1.15 * loupeFalloff;
+            vx[i] += nx * 2.4 * loupeFalloff + swirlX;
+            vy[i] += ny * 2.4 * loupeFalloff + swirlY;
           }
         }
-      }
 
-      // Tap / Click Radial Grid Shockwave
-      if (!prefersReducedMotion && ripples.length > 0 && !modalOpen) {
-        const rippleSprite = sprites[1];
-        for (let rp = 0; rp < ripples.length; rp++) {
-          const ripple = ripples[rp];
-          const age = nowSec - ripple.t0;
-          const targetDist = age * 380;
-          const maxR = targetDist + 64;
-          const minR = Math.max(0, targetDist - 64);
+        // Click / tap radial shockwave impulse
+        let rippleGlow = 0;
+        if (!prefersReducedMotion && !modalOpen && ripples.length > 0) {
+          for (let r = 0; r < ripples.length; r++) {
+            const ripple = ripples[r];
+            const age = nowSec - ripple.t0;
+            const targetDist = age * 380;
+            const dx = curX[i] - ripple.x;
+            const dy = curY[i] - ripple.y;
+            const dist = Math.hypot(dx, dy);
+            const delta = dist - targetDist;
 
-          const minCol = Math.max(0, Math.floor((ripple.x - maxR - offsetX) / GRID_SPACING));
-          const maxCol = Math.min(cols - 1, Math.ceil((ripple.x + maxR - offsetX) / GRID_SPACING));
-          const minRow = Math.max(0, Math.floor((ripple.y - maxR - offsetY) / GRID_SPACING));
-          const maxRow = Math.min(rows - 1, Math.ceil((ripple.y + maxR - offsetY) / GRID_SPACING));
-
-          for (let r = minRow; r <= maxRow; r++) {
-            const gy = offsetY + r * GRID_SPACING;
-            for (let c = minCol; c <= maxCol; c++) {
-              const gx = offsetX + c * GRID_SPACING;
-              const dx = gx - ripple.x;
-              const dy = gy - ripple.y;
-              const dist = Math.hypot(dx, dy);
-
-              if (dist >= minR && dist <= maxR && dist > 1) {
-                const delta = dist - targetDist;
-                const envelope = Math.exp(-(delta * delta) / (2 * 24 * 24)) * Math.exp(-2.4 * age);
-                if (envelope > 0.02) {
-                  const push = envelope * 5.0;
-                  const sx = gx + (dx / dist) * push;
-                  const sy = gy + (dy / dist) * push;
-                  const size = 4.6 + envelope * 2.8;
-
-                  ctx.globalAlpha = Math.min(0.48, envelope * 0.52);
-                  ctx.drawImage(
-                    rippleSprite,
-                    Math.round(sx - size / 2),
-                    Math.round(sy - size / 2),
-                    Math.round(size),
-                    Math.round(size)
-                  );
-                }
+            if (Math.abs(delta) < 58 && dist > 1) {
+              const envelope = Math.exp(-(delta * delta) / (2 * 24 * 24)) * Math.exp(-2.1 * age);
+              if (envelope > 0.02) {
+                vx[i] += (dx / dist) * envelope * 2.1;
+                vy[i] += (dy / dist) * envelope * 2.1;
+                if (envelope > rippleGlow) rippleGlow = envelope;
               }
             }
           }
         }
+
+        curX[i] += vx[i];
+        curY[i] += vy[i];
+
+        // Keep center typography crisp with gentle radial reading-zone attenuation
+        const cdx = (curX[i] - centerX) * invRx;
+        const cdy = (curY[i] - centerY) * invRy;
+        const radial = Math.min(1, Math.hypot(cdx, cdy));
+        const smoothCenter = radial * radial * (3 - 2 * radial);
+        const centerAttenuation = 0.56 + 0.44 * smoothCenter;
+
+        const fid = isFiducial[i] === 1;
+        const shimmer = prefersReducedMotion
+          ? 0.9
+          : 0.78 + 0.22 * Math.sin(nowSec * 1.15 + phase[i]);
+
+        const baseAlpha = (isDark ? (fid ? 0.21 : 0.13) : (fid ? 0.16 : 0.10)) * shimmer * centerAttenuation;
+        const interactionBoost = loupeFalloff * (isDark ? 0.34 : 0.26) + rippleGlow * 0.32;
+        const alpha = Math.min(0.62, baseAlpha + interactionBoost);
+
+        const size = (fid ? 4.4 : 3.2) + loupeFalloff * 2.4 + rippleGlow * 1.8;
+        const spriteIdx = loupeFalloff > 0.26 || rippleGlow > 0.22 ? 1 : nodeType[i];
+        const sprite = sprites[spriteIdx] || sprites[0];
+
+        ctx.globalAlpha = alpha;
+        ctx.drawImage(
+          sprite,
+          Math.round(curX[i] - size / 2),
+          Math.round(curY[i] - size / 2),
+          Math.round(size),
+          Math.round(size)
+        );
       }
 
-      // Update & draw sparse cursor wake micro-particles via ctx.drawImage
+      // Sparse cursor wake micro-particles
       let activeMotes = 0;
       if (!prefersReducedMotion && !modalOpen) {
         for (let i = 0; i < MAX_MOTES; i++) {
@@ -333,7 +356,7 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
             moteY[i] += moteVy[i];
 
             const progress = age / life;
-            const alpha = (1 - progress) * (1 - progress) * 0.55;
+            const alpha = (1 - progress) * (1 - progress) * 0.48;
             const size = moteSize[i] * (0.65 + 0.35 * (1 - progress));
             const sprite = sprites[moteType[i]] || sprites[1];
 
@@ -351,10 +374,8 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
 
       ctx.globalAlpha = 1.0;
 
-      // Idle Auto-Sleep: settle cleanly to 0fps / 0% CPU when pointer & ripples rest
-      const settledLoupe = Math.abs(loupeTarget - loupeStrength) < 0.01;
-      if (settledLoupe && activeMotes === 0 && ripples.length === 0) {
-        loupeStrength = loupeTarget;
+      // Honor prefers-reduced-motion by sleeping at 0fps once static state has rendered
+      if (prefersReducedMotion && activeMotes === 0 && ripples.length === 0) {
         isAnimating = false;
         return;
       }
@@ -380,7 +401,8 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
       canvas.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      syncThemeBuffers();
+      createSprites(themeRef.current === 'dark');
+      rebuildGrid();
       wake();
     };
 
@@ -399,7 +421,7 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
         } else {
           const dx = ptrX - prevX;
           const dy = ptrY - prevY;
-          if (Math.hypot(dx, dy) >= 14) {
+          if (Math.hypot(dx, dy) >= 18) {
             spawnMote(ptrX, ptrY, dx, dy, nowSec);
             lastSpawnX = ptrX;
             lastSpawnY = ptrY;
@@ -414,7 +436,6 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
       hasPointer = false;
       lastSpawnX = -9999;
       lastSpawnY = -9999;
-      wake();
     };
 
     const onPointerDown = (e: PointerEvent) => {

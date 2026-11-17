@@ -71,12 +71,11 @@ export const SystemSection: React.FC<SystemSectionProps> = ({ onOpenArchitecture
                 ))}
               </div>
 
-              {/* 6. Closer Look + Frosted Pill Button (NO inline bento, NO inline pipeline) */}
+              {/* 6. Closer Look + Action Navigation Button (opens full-page architecture view) */}
               <div className="pt-2">
                 <button
                   onClick={() => onOpenArchitectureSheet(system)}
                   className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full glass-dock text-xs font-semibold tracking-wide text-[var(--text-primary)] hover:bg-[var(--border-subtle)] border border-[var(--border-subtle)] transition-all active:scale-[0.98] shadow-sm"
-                  aria-haspopup="dialog"
                 >
                   <span>Closer look</span>
                   <Plus className="w-3.5 h-3.5 text-[var(--accent-titanium)]" />

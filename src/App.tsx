@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ParticleField } from './components/ParticleField';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -7,7 +7,16 @@ import { ArchitectureSheet } from './components/ArchitectureSheet';
 import { ExperienceSpec } from './components/ExperienceSpec';
 import { ContactCard } from './components/ContactCard';
 import { SpotlightModal } from './components/SpotlightModal';
+import { flagshipSystems } from './data/portfolio';
 import { FlagshipSystem } from './types';
+
+function resolveSystemFromHash(): FlagshipSystem | null {
+  if (typeof window === 'undefined') return null;
+  const hash = window.location.hash;
+  if (!hash.startsWith('#blueprint-')) return null;
+  const targetId = hash.slice('#blueprint-'.length);
+  return flagshipSystems.find((sys) => sys.id === targetId) ?? null;
+}
 
 export const App: React.FC = () => {
   // Theme state persisted in localStorage with zero-CLS initial hydration
@@ -19,8 +28,14 @@ export const App: React.FC = () => {
     return 'dark';
   });
 
-  const [architectureSystem, setArchitectureSystem] = useState<FlagshipSystem | null>(null);
+  const [architectureSystem, setArchitectureSystem] = useState<FlagshipSystem | null>(() =>
+    resolveSystemFromHash()
+  );
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
+
+  const savedScrollYRef = useRef(0);
+  const activeSystemRef = useRef<FlagshipSystem | null>(architectureSystem);
+  activeSystemRef.current = architectureSystem;
 
   // Synchronize data-theme on <html> element
   useEffect(() => {
@@ -45,54 +60,90 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const isModalOpen = Boolean(architectureSystem || isSpotlightOpen);
+  // Support browser back/forward navigation between root overview and full-page blueprints
+  useEffect(() => {
+    const handlePopState = () => {
+      const nextSystem = resolveSystemFromHash();
+      const wasOpen = Boolean(activeSystemRef.current);
+      setArchitectureSystem(nextSystem);
+      if (wasOpen && !nextSystem) {
+        requestAnimationFrame(() => {
+          window.scrollTo(0, savedScrollYRef.current);
+        });
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const handleOpenSystem = useCallback((system: FlagshipSystem) => {
+    if (!activeSystemRef.current) {
+      savedScrollYRef.current = window.scrollY;
+    }
+    setArchitectureSystem(system);
+    const targetHash = `#blueprint-${system.id}`;
+    if (window.location.hash !== targetHash) {
+      window.history.pushState({ systemId: system.id }, '', targetHash);
+    }
+  }, []);
+
+  const handleCloseSystem = useCallback(() => {
+    setArchitectureSystem(null);
+    if (window.location.hash.startsWith('#blueprint-')) {
+      window.history.pushState(null, '', window.location.pathname + window.location.search);
+    }
+    requestAnimationFrame(() => {
+      window.scrollTo(0, savedScrollYRef.current);
+    });
+  }, []);
 
   return (
     <div className="relative min-h-screen selection:bg-[var(--accent-titanium)]/20 selection:text-[var(--accent-titanium)]">
-      {/* Precision Blueprint Grid & Interactive Cursor Wake */}
-      <ParticleField theme={theme} isModalOpen={isModalOpen} />
+      {/* Subtly animated ordered pattern grid with cursor repulsion & ripple physics across all views */}
+      <ParticleField theme={theme} isModalOpen={isSpotlightOpen} />
 
-      {/* Navigation Docks (Desktop top dock & mobile bottom dock) */}
-      <Navbar
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        onOpenSpotlight={() => setIsSpotlightOpen(true)}
-      />
-
-      {/* Main Content Flow */}
-      <main className="relative z-10">
-        <Hero />
-
-        <SystemSection
-          onOpenArchitectureSheet={(system) => setArchitectureSystem(system)}
+      {architectureSystem ? (
+        <ArchitectureSheet
+          system={architectureSystem}
+          onSelectSystem={handleOpenSystem}
+          onClose={handleCloseSystem}
         />
+      ) : (
+        <>
+          {/* Navigation Docks (Desktop top dock & mobile bottom dock) */}
+          <Navbar
+            theme={theme}
+            onToggleTheme={toggleTheme}
+            onOpenSpotlight={() => setIsSpotlightOpen(true)}
+          />
 
-        <ExperienceSpec />
+          {/* Main Content Flow */}
+          <main className="relative z-10">
+            <Hero />
 
-        <ContactCard />
-      </main>
+            <SystemSection onOpenArchitectureSheet={handleOpenSystem} />
 
-      {/* Footer */}
-      <footer className="relative z-10 py-12 px-6 text-center text-xs text-[var(--text-tertiary)] font-mono border-t border-[var(--border-hairline)] select-none">
-        <p>
-          Wave C. Ambray · Full-Stack Software Engineer
-        </p>
-        <p className="mt-1 opacity-70">
-          Engineered with generous negative space &amp; zero heavy 3D dependencies.
-        </p>
-      </footer>
+            <ExperienceSpec />
 
-      {/* Architecture Sheet Modal (<dialog> kept mounted cleanly) */}
-      <ArchitectureSheet
-        system={architectureSystem}
-        onClose={() => setArchitectureSystem(null)}
-      />
+            <ContactCard />
+          </main>
+
+          {/* Footer */}
+          <footer className="relative z-10 py-12 px-6 text-center text-xs text-[var(--text-tertiary)] font-mono border-t border-[var(--border-hairline)] select-none">
+            <p>Wave C. Ambray · Full-Stack Software Engineer</p>
+            <p className="mt-1 opacity-70">
+              Engineered with generous negative space &amp; zero heavy 3D dependencies.
+            </p>
+          </footer>
+        </>
+      )}
 
       {/* Spotlight Command Palette (⌘K) */}
       <SpotlightModal
         isOpen={isSpotlightOpen}
         onClose={() => setIsSpotlightOpen(false)}
-        onSelectSystem={(sys) => setArchitectureSystem(sys)}
+        onSelectSystem={handleOpenSystem}
         theme={theme}
         onToggleTheme={toggleTheme}
       />

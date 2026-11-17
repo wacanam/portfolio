@@ -394,10 +394,10 @@ async function main() {
     assert.ok(!code.includes('ctx.shadowBlur ='), 'Forbidden per-frame shadowBlur allocation found in render loop!');
   });
 
-  await runTest('T1-CANVAS-04', 'Interactive 28px blueprint coordinate grid and magnetic cursor loupe implemented', 1, '3D Canvas', async () => {
+  await runTest('T1-CANVAS-04', 'Animated 28px pattern lattice with ambient wave drift and cursor repulsion', 1, '3D Canvas', async () => {
     const code = await safeReadFile(path.join(srcDir, 'components', 'ParticleField.tsx'));
-    assert.ok(code.includes('GRID_SPACING = 28') && code.includes('baseGridCanvas'), '28px pre-rendered blueprint grid missing');
-    assert.ok(code.includes('LOUPE_RADIUS') && code.includes('falloff'), 'Interactive cursor loupe falloff missing');
+    assert.ok(code.includes('GRID_SPACING = 28') && (code.includes('waveX') || code.includes('Math.sin')), 'Animated 28px pattern lattice missing');
+    assert.ok(code.includes('LOUPE_RADIUS') && code.includes('loupeFalloff'), 'Interactive cursor repulsion falloff missing');
   });
 
   await runTest('T1-CANVAS-05', 'Tactile physics: pointer swirl vortex and tap/click radial ripple', 1, '3D Canvas', async () => {
@@ -523,12 +523,12 @@ async function main() {
     assert.ok(code.includes('theme') || code.includes('Dark') || code.includes('Light'), 'Quick action for theme toggle missing');
   });
 
-  await runTest('T1-NAV-04', 'Closer look modal sheets for deep architectural inspection', 1, 'Modals & Nav', async () => {
+  await runTest('T1-NAV-04', 'Closer look dedicated full-page architecture view preserving minimal aesthetic', 1, 'Modals & Nav', async () => {
     const sheetFile = path.join(srcDir, 'components', 'ArchitectureSheet.tsx');
     assert.ok(existsSync(sheetFile), 'ArchitectureSheet.tsx missing');
     assert.ok(!existsSync(path.join(srcDir, 'components', 'CloserLookModal.tsx')), 'Superseded CloserLookModal.tsx must not exist');
     const code = await safeReadFile(sheetFile);
-    assert.ok(code.includes('dialog') || code.includes('modal'), 'Modal presentation missing');
+    assert.ok(code.includes('min-h-screen') && code.includes('Back to Overview') && code.includes('onClose'), 'Dedicated full-page presentation missing');
   });
 
   await runTest('T1-NAV-05', 'Native HTML5 <dialog> element usage with overscroll containment', 1, 'Modals & Nav', async () => {
