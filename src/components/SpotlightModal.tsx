@@ -203,7 +203,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
       id: 'act-download-resume',
       category: 'Action',
       title: 'Download Verified Résumé (PDF)',
-      subtitle: '3-page comprehensive technical resume',
+      subtitle: '2-page comprehensive technical resume',
       icon: <Download className="w-4 h-4 text-[var(--accent-titanium)]" />,
       action: () => {
         const link = document.createElement('a');

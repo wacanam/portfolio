@@ -62,8 +62,8 @@ const resumeHtml = `<!DOCTYPE html>
       font-family: -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", Arial, sans-serif;
       color: #1E293B;
       background: #FFFFFF;
-      font-size: 9.7pt;
-      line-height: 1.44;
+      font-size: 9.0pt;
+      line-height: 1.38;
       -webkit-font-smoothing: antialiased;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
@@ -72,7 +72,7 @@ const resumeHtml = `<!DOCTYPE html>
     .sheet {
       width: 210mm;
       height: 297mm;
-      padding: 15.5mm 17.5mm 13mm 17.5mm;
+      padding: 12mm 14.5mm 10.5mm 14.5mm;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -90,36 +90,36 @@ const resumeHtml = `<!DOCTYPE html>
 
     .sheet-footer {
       border-top: 1px solid #E2E8F0;
-      padding-top: 6px;
-      margin-top: 10px;
+      padding-top: 5px;
+      margin-top: 8px;
       display: flex;
       justify-content: space-between;
-      font-size: 8.2pt;
+      font-size: 7.9pt;
       color: #64748B;
     }
 
     h1 {
-      font-size: 21.5pt;
+      font-size: 19.5pt;
       font-weight: 700;
       letter-spacing: -0.02em;
       color: #0F172A;
-      line-height: 1.15;
-      margin-bottom: 4px;
+      line-height: 1.12;
+      margin-bottom: 3px;
     }
 
     .headline {
-      font-size: 10.6pt;
+      font-size: 10pt;
       font-weight: 700;
       color: #1D4ED8;
-      line-height: 1.35;
-      margin-bottom: 7px;
+      line-height: 1.3;
+      margin-bottom: 5px;
     }
 
     .contact-strip {
-      font-size: 8.4pt;
+      font-size: 8.1pt;
       color: #475569;
-      line-height: 1.48;
-      margin-bottom: 13px;
+      line-height: 1.42;
+      margin-bottom: 9px;
     }
 
     .contact-strip a {
@@ -133,32 +133,32 @@ const resumeHtml = `<!DOCTYPE html>
     }
 
     .section-title {
-      font-size: 9.6pt;
+      font-size: 9.0pt;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.04em;
       color: #0F172A;
       border-bottom: 1.25px solid #CBD5E1;
-      padding-bottom: 3.5px;
-      margin-top: 12px;
-      margin-bottom: 8px;
+      padding-bottom: 2.5px;
+      margin-top: 9px;
+      margin-bottom: 6px;
     }
 
     .section-title.first-top {
-      margin-top: 2px;
+      margin-top: 0;
     }
 
     .summary-text {
-      font-size: 9.5pt;
-      line-height: 1.48;
+      font-size: 8.95pt;
+      line-height: 1.4;
       color: #1E293B;
-      margin-bottom: 10px;
+      margin-bottom: 7px;
     }
 
     .skill-row {
-      margin-bottom: 5.5px;
-      font-size: 9.3pt;
-      line-height: 1.42;
+      margin-bottom: 4px;
+      font-size: 8.75pt;
+      line-height: 1.36;
     }
 
     .skill-row strong.cat {
@@ -166,7 +166,7 @@ const resumeHtml = `<!DOCTYPE html>
     }
 
     .role-block {
-      margin-bottom: 11px;
+      margin-bottom: 8.5px;
     }
 
     .role-block:last-child {
@@ -181,13 +181,13 @@ const resumeHtml = `<!DOCTYPE html>
     }
 
     .role-title {
-      font-size: 10pt;
+      font-size: 9.4pt;
       font-weight: 700;
       color: #0F172A;
     }
 
     .role-period {
-      font-size: 8.9pt;
+      font-size: 8.5pt;
       font-weight: 600;
       color: #334155;
       white-space: nowrap;
@@ -198,38 +198,38 @@ const resumeHtml = `<!DOCTYPE html>
       justify-content: space-between;
       align-items: baseline;
       gap: 8px;
-      margin-top: 1px;
-      margin-bottom: 5px;
+      margin-top: 0.5px;
+      margin-bottom: 3.5px;
     }
 
     .company-name {
-      font-size: 9pt;
+      font-size: 8.7pt;
       font-weight: 700;
       color: #1D4ED8;
     }
 
     .company-loc {
-      font-size: 8.4pt;
+      font-size: 8.1pt;
       color: #64748B;
       white-space: nowrap;
     }
 
     .promo-note {
-      font-size: 8.8pt;
+      font-size: 8.3pt;
       font-style: italic;
       font-weight: 600;
       color: #334155;
-      margin-bottom: 5px;
+      margin-bottom: 3.5px;
     }
 
     ul {
-      padding-left: 16px;
+      padding-left: 15px;
     }
 
     li {
-      margin-bottom: 5px;
-      font-size: 9.35pt;
-      line-height: 1.44;
+      margin-bottom: 3.2px;
+      font-size: 8.8pt;
+      line-height: 1.37;
     }
 
     li strong {
@@ -237,21 +237,21 @@ const resumeHtml = `<!DOCTYPE html>
     }
 
     .edu-school {
-      font-size: 9.4pt;
+      font-size: 8.85pt;
       color: #475569;
-      margin-top: 2px;
+      margin-top: 1.5px;
     }
 
     .edu-note {
-      font-size: 9.3pt;
+      font-size: 8.75pt;
       color: #1E293B;
-      margin-top: 3px;
+      margin-top: 2px;
     }
   </style>
 </head>
 <body>
 
-  <!-- PAGE 1 OF 3 -->
+  <!-- PAGE 1 OF 2 -->
   <section class="sheet">
     <div class="sheet-body">
       <header>
@@ -303,20 +303,6 @@ const resumeHtml = `<!DOCTYPE html>
           <li>
             Served as Lead Developer and System Architect for flagship multi-tenant <strong>EHR/EMR (Clinic EZ)</strong> and <strong>ERP (ERP EZ)</strong> platforms across <strong>Modular Monolith and Microservices</strong> topologies using <strong>C#/.NET Minimal APIs, Node.js, RabbitMQ, and Redis</strong>, supporting <strong>20,000+ users and 100–300 daily active users (DAUs)</strong> across on-premise university and private clinic deployments on <strong>Next.js and React Native (Expo)</strong>.
           </li>
-        </ul>
-      </div>
-    </div>
-    <footer class="sheet-footer">
-      <span>Wave Cantery Ambray — Résumé</span>
-      <span>Page 1 of 3</span>
-    </footer>
-  </section>
-
-  <!-- PAGE 2 OF 3 -->
-  <section class="sheet">
-    <div class="sheet-body">
-      <div class="role-block">
-        <ul>
           <li>
             Engineered tenant-isolated <strong>PostgreSQL</strong> persistence, <strong>end-to-end encryption (E2EE)</strong> for clinical and telemedicine payloads, offline-first client synchronization, strict <strong>XML/PDF schema serialization</strong>, and configurable state-machine workflows.
           </li>
@@ -331,6 +317,17 @@ const resumeHtml = `<!DOCTYPE html>
           </li>
         </ul>
       </div>
+    </div>
+    <footer class="sheet-footer">
+      <span>Wave Cantery Ambray — Résumé</span>
+      <span>Page 1 of 2</span>
+    </footer>
+  </section>
+
+  <!-- PAGE 2 OF 2 -->
+  <section class="sheet">
+    <div class="sheet-body">
+      <h2 class="section-title first-top">Professional Experience (Continued)</h2>
 
       <div class="role-block">
         <div class="role-header">
@@ -391,16 +388,7 @@ const resumeHtml = `<!DOCTYPE html>
           </li>
         </ul>
       </div>
-    </div>
-    <footer class="sheet-footer">
-      <span>Wave Cantery Ambray — Résumé</span>
-      <span>Page 2 of 3</span>
-    </footer>
-  </section>
 
-  <!-- PAGE 3 OF 3 -->
-  <section class="sheet">
-    <div class="sheet-body">
       <div class="role-block">
         <div class="role-header">
           <div class="role-title">Software Engineer (Full-Time)</div>
@@ -449,7 +437,7 @@ const resumeHtml = `<!DOCTYPE html>
     </div>
     <footer class="sheet-footer">
       <span>Wave Cantery Ambray — Résumé</span>
-      <span>Page 3 of 3</span>
+      <span>Page 2 of 2</span>
     </footer>
   </section>
 
@@ -476,8 +464,8 @@ async function main() {
     const pdfBuf = await fs.readFile(outPdfPath);
     const pages = (pdfBuf.toString('latin1').match(/\/MediaBox\s*\[/g) || []).length;
     console.log(`[build-resume] Rendered ${outPdfPath} (${pdfBuf.length} bytes, ${pages} A4 pages)`);
-    if (pages !== 3) {
-      throw new Error(`Expected exact 3-page PDF, rendered ${pages} pages.`);
+    if (pages !== 2) {
+      throw new Error(`Expected exact 2-page PDF, rendered ${pages} pages.`);
     }
   } finally {
     await fs.rm(tmpHtml, { force: true });

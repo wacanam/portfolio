@@ -194,13 +194,16 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
           const { r, g, b } = palette[s];
           const grad = offCtx.createRadialGradient(8, 8, 0, 8, 8, 8);
           if (isDark) {
-            grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.94)`);
-            grad.addColorStop(0.42, `rgba(${r}, ${g}, ${b}, 0.48)`);
+            grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 1.0)`);
+            grad.addColorStop(0.38, `rgba(${r}, ${g}, ${b}, 0.95)`);
+            grad.addColorStop(0.62, `rgba(${r}, ${g}, ${b}, 0.42)`);
+            grad.addColorStop(0.88, `rgba(${r}, ${g}, ${b}, 0.08)`);
             grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.0)`);
           } else {
             grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 1.0)`);
-            grad.addColorStop(0.25, `rgba(${r}, ${g}, ${b}, 0.85)`);
-            grad.addColorStop(0.55, `rgba(${r}, ${g}, ${b}, 0.48)`);
+            grad.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, 0.98)`);
+            grad.addColorStop(0.65, `rgba(${r}, ${g}, ${b}, 0.5)`);
+            grad.addColorStop(0.9, `rgba(${r}, ${g}, ${b}, 0.1)`);
             grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.0)`);
           }
           offCtx.fillStyle = grad;
@@ -270,26 +273,26 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
       const dist = Math.max(1, Math.hypot(dx, dy));
       const nx = dx / dist;
       const ny = dy / dist;
-      const curl = (Math.random() - 0.5) * (isClickBurst ? 1.85 : 1.4);
+      const curl = (Math.random() - 0.5) * (isClickBurst ? 0.95 : 1.4);
       const speed = isClickBurst
-        ? 2.1 + Math.random() * 3.6
+        ? 0.85 + Math.random() * 1.45
         : 0.28 + Math.random() * 0.45;
 
       const swirlX = -ny * curl + nx * speed;
       const swirlY = nx * curl + ny * speed;
-      const radialSpread = isClickBurst ? 4 + Math.random() * 14 : 0;
+      const radialSpread = isClickBurst ? 2 + Math.random() * 5 : 0;
 
-      moteX[i] = x + nx * radialSpread + (Math.random() - 0.5) * (isClickBurst ? 10 : 6);
-      moteY[i] = y + ny * radialSpread + (Math.random() - 0.5) * (isClickBurst ? 10 : 6);
+      moteX[i] = x + nx * radialSpread + (Math.random() - 0.5) * (isClickBurst ? 5 : 6);
+      moteY[i] = y + ny * radialSpread + (Math.random() - 0.5) * (isClickBurst ? 5 : 6);
       moteVx[i] = swirlX;
       moteVy[i] = swirlY;
       moteSpawn[i] = nowSec;
       moteLife[i] = isClickBurst
-        ? 1.85 + Math.random() * 0.95
+        ? 1.45 + Math.random() * 0.65
         : 0.54 + Math.random() * 0.24;
       moteSize[i] = isClickBurst
-        ? 6.8 + Math.random() * 5.0
-        : 4.0 + Math.random() * 3.0;
+        ? 4.4 + Math.random() * 2.6
+        : 3.6 + Math.random() * 2.2;
       if (forcedType !== undefined) {
         moteType[i] = forcedType;
       } else {
@@ -473,17 +476,17 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
           const life = moteLife[i];
           if (age >= 0 && age < life) {
             activeMotes++;
-            moteVx[i] *= 0.968;
-            moteVy[i] *= 0.968;
+            moteVx[i] *= 0.955;
+            moteVy[i] *= 0.955;
             moteX[i] += moteVx[i];
             moteY[i] += moteVy[i];
 
             const progress = age / life;
             const moteClear = textClearance(moteX[i], moteY[i]);
             const fade = 1 - Math.pow(progress, 1.5);
-            const alpha = fade * (isDark ? 0.68 : 0.78) * moteClear;
+            const alpha = fade * (isDark ? 0.84 : 0.88) * moteClear;
             if (alpha > 0.015) {
-              const size = moteSize[i] * (0.56 + 0.44 * (1 - progress));
+              const size = moteSize[i] * (0.64 + 0.36 * (1 - progress));
               const sprite = sprites[moteType[i]] || sprites[1];
               ctx.globalAlpha = alpha;
               ctx.drawImage(
@@ -586,10 +589,10 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
         if (ripples.length > 4) {
           ripples.shift();
         }
-        const burstCount = 18;
+        const burstCount = 15;
         const colorOffset = Math.floor(Math.random() * 3);
         for (let k = 0; k < burstCount; k++) {
-          const angle = (k / burstCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.42;
+          const angle = (k / burstCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.38;
           spawnMote(
             e.clientX,
             e.clientY,

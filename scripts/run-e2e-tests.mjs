@@ -210,7 +210,7 @@ async function main() {
   // ----------------------------------------------------------------------------
   suite('Tier 1: Feature Coverage — 1. Build & Asset Pipeline');
 
-  await runTest('T1-BUILD-01', 'Source portrait (23647.jpg), scripts/build-resume.mjs, and 3-page PDF resume are staged', 1, 'Build & Assets', async () => {
+  await runTest('T1-BUILD-01', 'Source portrait (23647.jpg), scripts/build-resume.mjs, and 2-page PDF resume are staged', 1, 'Build & Assets', async () => {
     const portraitPath = path.join(rootDir, '23647.jpg');
     const resumeScriptPath = path.join(scriptsDir, 'build-resume.mjs');
     const resumePath = path.join(publicDir, 'wave_ambray_resume.pdf');
@@ -223,7 +223,7 @@ async function main() {
     assert.ok(resumeStat.size > 50000, `Resume PDF size too small (${resumeStat.size} bytes)`);
     const pdfLatin1 = (await fs.readFile(resumePath)).toString('latin1');
     const pageCount = (pdfLatin1.match(/\/MediaBox\s*\[/g) || []).length;
-    assert.strictEqual(pageCount, 3, `Expected exact 3 /MediaBox pages in resume PDF, found ${pageCount}`);
+    assert.strictEqual(pageCount, 2, `Expected exact 2 /MediaBox pages in resume PDF, found ${pageCount}`);
   });
 
   await runTest('T1-BUILD-02', 'Multi-format portrait generation (AVIF and WebP at 400px and 800px)', 1, 'Build & Assets', async () => {
