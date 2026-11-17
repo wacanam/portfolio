@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, CheckCircle, CheckCircle2, Shield, Layers, Cpu, ArrowRight } from 'lucide-react';
+import { X, CheckCircle2, Shield, Layers, Cpu, ArrowRight } from 'lucide-react';
 import { FlagshipSystem } from '../types';
 
 interface ArchitectureSheetProps {
@@ -159,9 +159,9 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({ system, on
                   <div className="font-semibold text-[var(--text-primary)]">
                     {activeNode.name} · <span className="text-[var(--accent-titanium)]">{activeNode.tech}</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[var(--accent-signal)] font-mono font-semibold text-[11px]">
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>{activeNode.guarantee}</span>
+                  <div className="text-[var(--text-secondary)] font-mono text-[11px]">
+                    <span className="text-[var(--text-tertiary)] uppercase mr-1">Focus:</span>
+                    <span className="text-[var(--accent-titanium)]">{activeNode.guarantee}</span>
                   </div>
                 </div>
                 <p className="leading-relaxed mb-1">{activeNode.details}</p>
@@ -172,46 +172,46 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({ system, on
             )}
           </div>
 
-          {/* Deep Architectural Specifications */}
+          {/* Grounded Architecture Notes */}
           <div className="space-y-4 text-sm">
-            {/* Challenge */}
+            {/* Problem Context */}
             <div className="rounded-2xl p-4.5 bg-[var(--surface-card)] border border-[var(--border-subtle)]">
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-titanium)] mb-2 font-semibold">
                 <Shield className="w-3.5 h-3.5" />
-                <span>Production Challenge</span>
+                <span>Problem Context</span>
               </div>
               <p className="text-[var(--text-secondary)] leading-relaxed text-xs sm:text-sm">
                 {cachedSystem.deepArchitecture.challenge}
               </p>
             </div>
 
-            {/* Architecture Solution */}
+            {/* System Architecture */}
             <div className="rounded-2xl p-4.5 bg-[var(--surface-card)] border border-[var(--border-subtle)]">
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-titanium)] mb-2 font-semibold">
                 <Layers className="w-3.5 h-3.5" />
-                <span>Distributed Architecture Solution</span>
+                <span>System Architecture</span>
               </div>
               <p className="text-[var(--text-secondary)] leading-relaxed text-xs sm:text-sm">
                 {cachedSystem.deepArchitecture.architecture}
               </p>
             </div>
 
-            {/* Scalability */}
+            {/* Infrastructure & Scaling */}
             <div className="rounded-2xl p-4.5 bg-[var(--surface-card)] border border-[var(--border-subtle)]">
               <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-titanium)] mb-2 font-semibold">
                 <Cpu className="w-3.5 h-3.5" />
-                <span>Scalability &amp; Reliability Strategy</span>
+                <span>Infrastructure &amp; Scaling</span>
               </div>
               <p className="text-[var(--text-secondary)] leading-relaxed text-xs sm:text-sm">
                 {cachedSystem.deepArchitecture.scalability}
               </p>
             </div>
 
-            {/* Verified Production Outcome */}
+            {/* Delivery & Team Scope */}
             <div className="rounded-2xl p-4.5 bg-[var(--surface-card)] border border-[var(--border-subtle)]">
-              <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-signal)] mb-2 font-semibold">
+              <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-titanium)] mb-2 font-semibold">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Verified Production Outcome</span>
+                <span>Delivery &amp; Team Scope</span>
               </div>
               <p className="text-[var(--text-secondary)] leading-relaxed text-xs sm:text-sm">
                 {cachedSystem.deepArchitecture.verifiedOutcome}

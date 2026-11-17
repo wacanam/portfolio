@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "resume": "node scripts/build-resume.mjs",
     "optimize": "node scripts/build-assets.mjs",
     "prebuild": "command -v npm >/dev/null 2>&1 && npm run optimize || bun run optimize",
     "build": "tsc -b && vite build",

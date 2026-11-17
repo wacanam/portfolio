@@ -7,7 +7,7 @@ Minimal, Apple Pro–inspired Single Page Application portfolio for **Wave C. Am
 ## Stack
 
 - **UI & Build:** React 19, TypeScript, Vite 6, Tailwind CSS 4, `lucide-react`
-- **3D Particle Engine:** Pure TypeScript + HTML5 2D `<canvas>` using pre-rendered `16×16` offscreen radial sprites (`ctx.drawImage`), `visibilityState` throttling, `prefers-reduced-motion` support, and spring-interpolated scroll morph formations
+- **Interactive Surface Canvas:** Pure TypeScript + HTML5 2D `<canvas>` rendering a static `28px` blueprint coordinate matrix (`112px` fiducials) paired with an elastic cursor lens, `<= 56`-mote cursor wake via `16×16` offscreen radial sprites (`ctx.drawImage`), tap ripple waves, and `0fps` idle auto-sleep
 - **Asset & OpenGraph Pipeline:** `sharp`-powered [`scripts/build-assets.mjs`](./scripts/build-assets.mjs) producing smart-cropped AVIF/WebP portraits, a `24px` blur placeholder in [`src/generated/assetMeta.ts`](./src/generated/assetMeta.ts), a `1200×630` Keynote OpenGraph card (`og-image.png` / `og-image.webp`), PWA icons, `site.webmanifest`, `robots.txt`, and `sitemap.xml`
 
 ## Commands

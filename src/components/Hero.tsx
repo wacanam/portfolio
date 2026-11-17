@@ -2,19 +2,7 @@ import React from 'react';
 import { Download, ArrowRight, Github, Linkedin, Mail, MessageSquare } from 'lucide-react';
 import { contactData } from '../data/portfolio';
 
-interface HeroProps {
-  activeFormation: number;
-  onSelectFormation: (idx: 0 | 1 | 2 | 3) => void;
-}
-
-const formationNames = [
-  { id: 0, label: 'Sphere', desc: 'Fibonacci Orbital' },
-  { id: 1, label: 'Wave', desc: 'Topographic Wave' },
-  { id: 2, label: 'Torus', desc: 'Dual-Ring Cipher' },
-  { id: 3, label: 'Lattice', desc: 'State Machine' },
-] as const;
-
-export const Hero: React.FC<HeroProps> = ({ activeFormation, onSelectFormation }) => {
+export const Hero: React.FC = () => {
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
@@ -27,9 +15,8 @@ export const Hero: React.FC<HeroProps> = ({ activeFormation, onSelectFormation }
       id="hero"
       className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-20 text-center select-none"
     >
-      {/* Editorial Scrim Container protecting typography legibility over 3D particle canvas */}
-      <div className="reading-scrim relative max-w-3xl w-full mx-auto py-8 px-3 sm:px-6 rounded-3xl flex flex-col items-center">
-        {/* Top Availability Kicker (no SaaS pill badge) */}
+      <div className="relative max-w-3xl w-full mx-auto py-8 px-2 sm:px-6 flex flex-col items-center">
+        {/* Top Availability Kicker */}
         <div className="inline-flex flex-wrap items-center justify-center gap-2.5 mb-7 text-xs font-medium tracking-[0.02em] text-[var(--text-secondary)]">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent-signal)]" aria-hidden="true" />
           <span>Available for Mid-to-Senior Roles</span>
@@ -104,7 +91,7 @@ export const Hero: React.FC<HeroProps> = ({ activeFormation, onSelectFormation }
         </div>
 
         {/* Quiet Social Links */}
-        <div className="flex items-center gap-5 text-[var(--text-secondary)] mb-12">
+        <div className="flex items-center gap-5 text-[var(--text-secondary)]">
           <a
             href={contactData.githubUrl}
             target="_blank"
@@ -139,32 +126,6 @@ export const Hero: React.FC<HeroProps> = ({ activeFormation, onSelectFormation }
           >
             <MessageSquare className="w-4 h-4" />
           </a>
-        </div>
-
-        {/* Discreet Hairline 3D Formation Index Tabs */}
-        <div
-          className="inline-flex items-center gap-4 sm:gap-5 border-b border-[var(--border-hairline)] px-1"
-          role="group"
-          aria-label="Particle geometry preview"
-        >
-          {formationNames.map((f, i) => {
-            const isActive = activeFormation === f.id;
-            return (
-              <button
-                key={f.id}
-                onClick={() => onSelectFormation(f.id)}
-                title={f.desc}
-                className={`pb-2 -mb-px text-xs font-mono tracking-wide border-b-2 transition-colors ${
-                  isActive
-                    ? 'border-[var(--accent-titanium)] text-[var(--text-primary)] font-semibold'
-                    : 'border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-                }`}
-              >
-                <span className="opacity-50 mr-1.5">0{i + 1}</span>
-                {f.label}
-              </button>
-            );
-          })}
         </div>
       </div>
     </section>

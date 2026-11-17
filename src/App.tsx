@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ParticleField } from './components/ParticleField';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -19,17 +19,8 @@ export const App: React.FC = () => {
     return 'dark';
   });
 
-  const [activeFormation, setActiveFormation] = useState<0 | 1 | 2 | 3>(0);
   const [architectureSystem, setArchitectureSystem] = useState<FlagshipSystem | null>(null);
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
-
-  // Manual formation preview lock to prevent IntersectionObserver from clobbering Hero clicks
-  const isManualPreviewRef = useRef(false);
-
-  const handleSelectFormation = (idx: 0 | 1 | 2 | 3) => {
-    isManualPreviewRef.current = idx !== 0;
-    setActiveFormation(idx);
-  };
 
   // Synchronize data-theme on <html> element
   useEffect(() => {
@@ -54,51 +45,12 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // IntersectionObserver to sync 3D particle formations with scroll chapters
-  useEffect(() => {
-    const observerCallback: IntersectionObserverCallback = (entries) => {
-      for (const entry of entries) {
-        if (entry.isIntersecting) {
-          const id = entry.target.id;
-          if (id === 'hero') {
-            if (!isManualPreviewRef.current) {
-              setActiveFormation(0); // Fibonacci sphere
-            }
-          } else if (id === 'heading-system-broadband') {
-            isManualPreviewRef.current = false;
-            setActiveFormation(1); // Topographic wave
-          } else if (id === 'heading-system-clinic-erp') {
-            isManualPreviewRef.current = false;
-            setActiveFormation(2); // Dual-ring cipher torus
-          } else if (id === 'heading-system-edcs') {
-            isManualPreviewRef.current = false;
-            setActiveFormation(3); // Crystalline state lattice
-          }
-        }
-      }
-    };
-
-    const observer = new IntersectionObserver(observerCallback, {
-      rootMargin: '-20% 0px -40% 0px',
-      threshold: 0.1,
-    });
-
-    const targets = [
-      document.getElementById('hero'),
-      document.getElementById('heading-system-broadband'),
-      document.getElementById('heading-system-clinic-erp'),
-      document.getElementById('heading-system-edcs'),
-    ].filter(Boolean) as HTMLElement[];
-
-    targets.forEach((el) => observer.observe(el));
-
-    return () => observer.disconnect();
-  }, []);
+  const isModalOpen = Boolean(architectureSystem || isSpotlightOpen);
 
   return (
     <div className="relative min-h-screen selection:bg-[var(--accent-titanium)]/20 selection:text-[var(--accent-titanium)]">
-      {/* 3D Micro-Particle Canvas Engine */}
-      <ParticleField activeFormation={activeFormation} theme={theme} />
+      {/* Precision Blueprint Grid & Interactive Cursor Wake */}
+      <ParticleField theme={theme} isModalOpen={isModalOpen} />
 
       {/* Navigation Docks (Desktop top dock & mobile bottom dock) */}
       <Navbar
@@ -109,10 +61,7 @@ export const App: React.FC = () => {
 
       {/* Main Content Flow */}
       <main className="relative z-10">
-        <Hero
-          activeFormation={activeFormation}
-          onSelectFormation={handleSelectFormation}
-        />
+        <Hero />
 
         <SystemSection
           onOpenArchitectureSheet={(system) => setArchitectureSystem(system)}

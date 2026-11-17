@@ -210,15 +210,20 @@ async function main() {
   // ----------------------------------------------------------------------------
   suite('Tier 1: Feature Coverage — 1. Build & Asset Pipeline');
 
-  await runTest('T1-BUILD-01', 'Source portrait (23647.jpg) and verified resume (public/wave_ambray_resume.pdf) are staged', 1, 'Build & Assets', async () => {
+  await runTest('T1-BUILD-01', 'Source portrait (23647.jpg), scripts/build-resume.mjs, and 3-page PDF resume are staged', 1, 'Build & Assets', async () => {
     const portraitPath = path.join(rootDir, '23647.jpg');
+    const resumeScriptPath = path.join(scriptsDir, 'build-resume.mjs');
     const resumePath = path.join(publicDir, 'wave_ambray_resume.pdf');
     assert.ok(existsSync(portraitPath), `Source portrait missing at ${portraitPath}`);
+    assert.ok(existsSync(resumeScriptPath), `Resume generator script missing at ${resumeScriptPath}`);
     assert.ok(existsSync(resumePath), `Verified resume PDF missing at ${resumePath}`);
     const portraitStat = statSync(portraitPath);
     const resumeStat = statSync(resumePath);
     assert.ok(portraitStat.size > 50000, `Source portrait size too small (${portraitStat.size} bytes)`);
     assert.ok(resumeStat.size > 50000, `Resume PDF size too small (${resumeStat.size} bytes)`);
+    const pdfLatin1 = (await fs.readFile(resumePath)).toString('latin1');
+    const pageCount = (pdfLatin1.match(/\/MediaBox\s*\[/g) || []).length;
+    assert.strictEqual(pageCount, 3, `Expected exact 3 /MediaBox pages in resume PDF, found ${pageCount}`);
   });
 
   await runTest('T1-BUILD-02', 'Multi-format portrait generation (AVIF and WebP at 400px and 800px)', 1, 'Build & Assets', async () => {
@@ -389,12 +394,10 @@ async function main() {
     assert.ok(!code.includes('ctx.shadowBlur ='), 'Forbidden per-frame shadowBlur allocation found in render loop!');
   });
 
-  await runTest('T1-CANVAS-04', 'Four scroll-choreographed morph formations implemented', 1, '3D Canvas', async () => {
+  await runTest('T1-CANVAS-04', 'Interactive 28px blueprint coordinate grid and magnetic cursor loupe implemented', 1, '3D Canvas', async () => {
     const code = await safeReadFile(path.join(srcDir, 'components', 'ParticleField.tsx'));
-    assert.ok(code.includes('GOLDEN_ANGLE') || code.includes('Fibonacci') || code.includes('formation === 0'), 'Formation 0 (Fibonacci Sphere) missing');
-    assert.ok(code.includes('Wave') || code.includes('formation === 1') || code.includes('terrain'), 'Formation 1 (Topographic Wave) missing');
-    assert.ok(code.includes('Torus') || code.includes('formation === 2') || code.includes('Cipher'), 'Formation 2 (Dual-Ring Torus) missing');
-    assert.ok(code.includes('Lattice') || code.includes('formation === 3') || code.includes('Crystalline'), 'Formation 3 (Crystalline Lattice) missing');
+    assert.ok(code.includes('GRID_SPACING = 28') && code.includes('baseGridCanvas'), '28px pre-rendered blueprint grid missing');
+    assert.ok(code.includes('LOUPE_RADIUS') && code.includes('falloff'), 'Interactive cursor loupe falloff missing');
   });
 
   await runTest('T1-CANVAS-05', 'Tactile physics: pointer swirl vortex and tap/click radial ripple', 1, '3D Canvas', async () => {
@@ -404,11 +407,12 @@ async function main() {
     assert.ok(code.includes('swirl') || code.includes('vortex') || code.includes('-dy'), 'Tangential swirl physics vector missing');
   });
 
-  await runTest('T1-CANVAS-06', 'Background tab blur throttling and prefers-reduced-motion breathing mode', 1, '3D Canvas', async () => {
+  await runTest('T1-CANVAS-06', 'Idle RAF auto-sleep (0fps), background tab pause, and prefers-reduced-motion support', 1, '3D Canvas', async () => {
     const code = await safeReadFile(path.join(srcDir, 'components', 'ParticleField.tsx'));
     assert.ok(code.includes('visibilitychange') || code.includes('visibilityState'), 'visibilitychange lifecycle listener missing');
     assert.ok(code.includes('prefers-reduced-motion'), 'prefers-reduced-motion media query listener missing');
     assert.ok(code.includes('cancelAnimationFrame'), 'cancelAnimationFrame on background missing');
+    assert.ok(code.includes('isAnimating = false'), 'Idle auto-sleep RAF shutdown missing');
   });
 
   suite('Tier 1: Feature Coverage — 4. Verified Content & Flagship Systems');
@@ -749,14 +753,15 @@ async function main() {
     assert.ok(code.includes('2)'), 'DPR cap value must be 2');
   });
 
-  await runTest('T2-BOUND-21', 'Mobile particle count (< 768px) is strictly 720 particles', 2, 'Canvas Constraints', async () => {
+  await runTest('T2-BOUND-21', 'Blueprint coordinate grid uses 28px dot spacing and 112px fiducial markers', 2, 'Canvas Constraints', async () => {
     const code = await safeReadFile(path.join(srcDir, 'components', 'ParticleField.tsx'));
-    assert.ok(code.includes('720'), 'Mobile particle count 720 missing in ParticleField.tsx');
+    assert.ok(code.includes('GRID_SPACING = 28'), 'GRID_SPACING = 28 missing in ParticleField.tsx');
+    assert.ok(code.includes('FIDUCIAL_STRIDE = 4') || code.includes('112'), 'Fiducial 112px stride missing in ParticleField.tsx');
   });
 
-  await runTest('T2-BOUND-22', 'Desktop particle count (>= 768px) is strictly 1,350 particles', 2, 'Canvas Constraints', async () => {
+  await runTest('T2-BOUND-22', 'Cursor micro-particle wake ring buffer capped at <= 64 live motes (MAX_MOTES = 56)', 2, 'Canvas Constraints', async () => {
     const code = await safeReadFile(path.join(srcDir, 'components', 'ParticleField.tsx'));
-    assert.ok(code.includes('1350') || code.includes('1,350'), 'Desktop particle count 1350 missing in ParticleField.tsx');
+    assert.ok(code.includes('MAX_MOTES = 56'), 'MAX_MOTES = 56 wake buffer cap missing in ParticleField.tsx');
   });
 
   await runTest('T2-BOUND-23', 'Pre-rendered offscreen sprite dimension is strictly 16x16 pixels', 2, 'Canvas Constraints', async () => {
@@ -847,17 +852,18 @@ async function main() {
     assert.ok(canvasCode.includes('245') && canvasCode.includes('29'), 'Contrasting Dark and Light sprite palettes not found');
   });
 
-  await runTest('T3-CROSS-02', 'Scroll chapter observer choreographs canvas morph transitions across all 4 formations', 3, 'Scroll & Formation', async () => {
+  await runTest('T3-CROSS-02', 'Open modal dialogs pause interactive cursor wake on ParticleField surface', 3, 'Modal & Surface', async () => {
     const appCode = await safeReadFile(path.join(srcDir, 'App.tsx'));
-    assert.ok(appCode.includes('IntersectionObserver'), 'IntersectionObserver missing in App.tsx');
-    assert.ok(appCode.includes('setActiveFormation') || appCode.includes('activeFormation'), 'activeFormation state setter missing in App.tsx');
+    const canvasCode = await safeReadFile(path.join(srcDir, 'components', 'ParticleField.tsx'));
+    assert.ok(appCode.includes('isModalOpen'), 'App.tsx does not pass isModalOpen to ParticleField');
     assert.ok(appCode.includes('ParticleField'), 'ParticleField not mounted in App.tsx');
+    assert.ok(canvasCode.includes('isModalOpenRef.current'), 'ParticleField.tsx does not pause interactive wake during open modal');
   });
 
-  await runTest('T3-CROSS-03', 'Hero preview formation pill switcher interactively overrides active formation', 3, 'Hero & Formation', async () => {
+  await runTest('T3-CROSS-03', 'Hero keeps clean 4-metric spec grid without AI-demo 3D formation pills', 3, 'Hero Clarity', async () => {
     const heroCode = await safeReadFile(path.join(srcDir, 'components', 'Hero.tsx'));
-    assert.ok(heroCode.includes('onFormationChange') || heroCode.includes('activeFormation'), 'Formation switcher props missing in Hero.tsx');
-    assert.ok(heroCode.includes('Sphere') && heroCode.includes('Wave') && heroCode.includes('Torus') && heroCode.includes('Lattice'), 'Hero formation preview buttons missing');
+    assert.ok(!heroCode.includes('3D MORPH') && !heroCode.includes('onSelectFormation'), 'Artificial 3D morph pills must be removed from Hero.tsx');
+    assert.ok(heroCode.includes('6+ Yrs') && heroCode.includes('100M+') && heroCode.includes('20K+'), 'Hero 4-metric architectural <dl> grid missing');
   });
 
   await runTest('T3-CROSS-04', 'Stack Matrix skill pill click dynamically highlights matching career timeline rows', 3, 'Stack & Career', async () => {

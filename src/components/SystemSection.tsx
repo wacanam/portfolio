@@ -7,11 +7,11 @@ interface SystemSectionProps {
   onOpenArchitectureSheet: (system: FlagshipSystem) => void;
 }
 
-// 4 curated minimal architectural stack tokens per system
+// 4 curated real architectural stack tokens per system matching verified résumé experience
 const systemTokens: Record<string, string[]> = {
-  'system-broadband': ['C# / .NET 8', 'PostGIS', 'Redis Cluster', 'MapLibre GL'],
-  'system-clinic-erp': ['.NET Core', 'Next.js & Expo', 'pgvector RAG', 'RabbitMQ'],
-  'system-edcs': ['ASP.NET Core', 'RabbitMQ', 'Keycloak OIDC', 'JSON Schema'],
+  'system-broadband': ['ASP.NET Core', 'EF Core & Dapper', 'PostGIS', 'Redis'],
+  'system-clinic-erp': ['.NET Minimal APIs', 'Next.js & Expo', 'pgvector RAG', 'RabbitMQ'],
+  'system-edcs': ['ASP.NET Core', 'RabbitMQ ETL', 'Local / S3 / Azure', 'Keycloak RBAC'],
 };
 
 export const SystemSection: React.FC<SystemSectionProps> = ({ onOpenArchitectureSheet }) => {
@@ -24,7 +24,7 @@ export const SystemSection: React.FC<SystemSectionProps> = ({ onOpenArchitecture
           return (
             <article
               key={system.id}
-              className="scroll-mt-28 reading-scrim rounded-3xl py-6 px-4 sm:px-6 -mx-4 sm:-mx-6 flex flex-col items-start gap-7"
+              className="scroll-mt-28 flex flex-col items-start gap-7"
               aria-labelledby={`heading-${system.id}`}
             >
               {/* 1. Editorial Hairline Kicker */}

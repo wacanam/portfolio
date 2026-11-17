@@ -26,7 +26,7 @@ export const ContactCard: React.FC = () => {
 
   return (
     <section id="contact" className="relative py-28 px-6 max-w-5xl mx-auto select-none">
-      <div className="reading-scrim rounded-3xl py-4 px-4 flex flex-col items-center text-center gap-3 mb-12">
+      <div className="flex flex-col items-center text-center gap-3 mb-14">
         <div className="inline-flex items-center gap-3">
           <span className="w-6 h-px bg-[var(--accent-titanium)]" aria-hidden="true" />
           <span className="text-[11px] font-mono tracking-widest uppercase text-[var(--accent-titanium)] font-semibold">

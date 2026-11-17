@@ -1,12 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 
 export interface ParticleFieldProps {
-  activeFormation: 0 | 1 | 2 | 3;
   theme: 'dark' | 'light';
+  isModalOpen?: boolean;
 }
 
-const MAX_PARTICLES = 1350;
-const MOBILE_PARTICLES = 720;
+const GRID_SPACING = 28;
+const FIDUCIAL_STRIDE = 4; // Crosshair fiducial every 112px
+const LOUPE_RADIUS = 210;
+const MAX_MOTES = 56;
 
 interface RippleEvent {
   x: number;
@@ -14,17 +16,20 @@ interface RippleEvent {
   t0: number;
 }
 
-export const ParticleField: React.FC<ParticleFieldProps> = ({ activeFormation, theme }) => {
+export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen = false }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  // Synchronize activeFormation and theme in refs on every render
-  const activeFormationRef = useRef<0 | 1 | 2 | 3>(activeFormation);
-  activeFormationRef.current = activeFormation;
+  const wakeRef = useRef<(() => void) | null>(null);
 
   const themeRef = useRef<'dark' | 'light'>(theme);
   themeRef.current = theme;
 
-  // Single mount effect: runs continuously without restarting on prop changes
+  const isModalOpenRef = useRef<boolean>(isModalOpen);
+  isModalOpenRef.current = isModalOpen;
+
+  useEffect(() => {
+    wakeRef.current?.();
+  }, [theme, isModalOpen]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -32,48 +37,16 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ activeFormation, t
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animationFrameId: number;
+    let animationFrameId = 0;
+    let isAnimating = false;
     let isVisible = document.visibilityState !== 'hidden';
     let prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Allocate Typed Arrays contiguously ONCE for optimal CPU cache locality
-    const currentX = new Float32Array(MAX_PARTICLES);
-    const currentY = new Float32Array(MAX_PARTICLES);
-    const currentZ = new Float32Array(MAX_PARTICLES);
+    // Pre-allocated offscreen resting blueprint surface
+    const baseGridCanvas = document.createElement('canvas');
+    const baseGridCtx = baseGridCanvas.getContext('2d');
 
-    const targetX = new Float32Array(MAX_PARTICLES);
-    const targetY = new Float32Array(MAX_PARTICLES);
-    const targetZ = new Float32Array(MAX_PARTICLES);
-
-    const vx = new Float32Array(MAX_PARTICLES);
-    const vy = new Float32Array(MAX_PARTICLES);
-    const vz = new Float32Array(MAX_PARTICLES);
-
-    const spriteType = new Uint8Array(MAX_PARTICLES);
-    const baseScale = new Float32Array(MAX_PARTICLES);
-    const phaseOffset = new Float32Array(MAX_PARTICLES);
-
-    // Initialize particle attributes and random positions ONCE on mount
-    for (let i = 0; i < MAX_PARTICLES; i++) {
-      currentX[i] = (Math.random() - 0.5) * 600;
-      currentY[i] = (Math.random() - 0.5) * 600;
-      currentZ[i] = (Math.random() - 0.5) * 400;
-
-      // Color distribution: 65% Titanium, 25% Champagne, 10% Emerald
-      const rand = Math.random();
-      if (rand < 0.65) {
-        spriteType[i] = 0; // Titanium / Obsidian
-      } else if (rand < 0.90) {
-        spriteType[i] = 1; // Champagne
-      } else {
-        spriteType[i] = 2; // Emerald Signal
-      }
-
-      baseScale[i] = 0.75 + Math.random() * 0.5;
-      phaseOffset[i] = Math.random() * Math.PI * 2;
-    }
-
-    // Pre-allocate 3 16x16 offscreen sprite canvases
+    // Pre-allocate 3 16x16 offscreen radial sprite canvases (zero per-frame allocations)
     const sprites: HTMLCanvasElement[] = [
       document.createElement('canvas'),
       document.createElement('canvas'),
@@ -84,9 +57,36 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ activeFormation, t
       sprites[s].height = 16;
     }
 
+    // Ring buffer for sparse cursor micro-particle wake (<= 56 live motes)
+    const moteX = new Float32Array(MAX_MOTES);
+    const moteY = new Float32Array(MAX_MOTES);
+    const moteVx = new Float32Array(MAX_MOTES);
+    const moteVy = new Float32Array(MAX_MOTES);
+    const moteSpawn = new Float32Array(MAX_MOTES);
+    const moteLife = new Float32Array(MAX_MOTES);
+    const moteSize = new Float32Array(MAX_MOTES);
+    const moteType = new Uint8Array(MAX_MOTES);
+    let moteCursor = 0;
+
+    for (let i = 0; i < MAX_MOTES; i++) {
+      moteSpawn[i] = -100;
+      moteLife[i] = 0.65;
+    }
+
+    const ripples: RippleEvent[] = [];
+
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
     let appliedTheme: 'dark' | 'light' | null = null;
 
-    // Rebuild radial glow sprites in-place on existing canvases without restarting simulation
+    let ptrX = -9999;
+    let ptrY = -9999;
+    let lastSpawnX = -9999;
+    let lastSpawnY = -9999;
+    let hasPointer = false;
+    let loupeStrength = 0;
+
     const createSprites = (isDark: boolean) => {
       const palette = isDark
         ? [
@@ -100,388 +100,371 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ activeFormation, t
             { r: 5, g: 150, b: 105 },   // Emerald #059669
           ];
 
-      const coreAlpha = isDark ? 0.82 : 0.42;
-      const midAlpha = isDark ? 0.48 : 0.22;
-      const outerAlpha = isDark ? 0.14 : 0.06;
+      const coreAlpha = isDark ? 0.92 : 0.72;
+      const midAlpha = isDark ? 0.45 : 0.34;
 
       for (let s = 0; s < 3; s++) {
-        const offscreen = sprites[s];
-        const offCtx = offscreen.getContext('2d');
+        const offCtx = sprites[s].getContext('2d');
         if (offCtx) {
           offCtx.clearRect(0, 0, 16, 16);
           const { r, g, b } = palette[s];
           const grad = offCtx.createRadialGradient(8, 8, 0, 8, 8, 8);
           grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${coreAlpha})`);
-          grad.addColorStop(0.35, `rgba(${r}, ${g}, ${b}, ${midAlpha})`);
-          grad.addColorStop(0.7, `rgba(${r}, ${g}, ${b}, ${outerAlpha})`);
+          grad.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, ${midAlpha})`);
           grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.0)`);
           offCtx.fillStyle = grad;
           offCtx.fillRect(0, 0, 16, 16);
         }
       }
-      appliedTheme = isDark ? 'dark' : 'light';
     };
 
-    createSprites(themeRef.current === 'dark');
+    const buildBaseGrid = (isDark: boolean) => {
+      if (!baseGridCtx) return;
 
-    // Viewport dimensions & DPR capping
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-    let dpr = Math.min(window.devicePixelRatio || 1, 2);
-    let activeCount = width >= 768 ? MAX_PARTICLES : MOBILE_PARTICLES;
+      baseGridCanvas.width = Math.round(width * dpr);
+      baseGridCanvas.height = Math.round(height * dpr);
+      baseGridCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      baseGridCtx.clearRect(0, 0, width, height);
 
-    const resize = () => {
-      width = window.innerWidth;
-      height = window.innerHeight;
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
-      activeCount = width >= 768 ? MAX_PARTICLES : MOBILE_PARTICLES;
+      const dotColor = isDark ? 'rgba(245, 245, 247, 0.045)' : 'rgba(29, 29, 31, 0.05)';
+      const fiducialColor = isDark ? 'rgba(214, 197, 169, 0.085)' : 'rgba(122, 98, 64, 0.085)';
 
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
+      const offsetX = (width % GRID_SPACING) / 2;
+      const offsetY = (height % GRID_SPACING) / 2;
+      const cols = Math.floor((width - offsetX) / GRID_SPACING) + 1;
+      const rows = Math.floor((height - offsetY) / GRID_SPACING) + 1;
 
-      // Use setTransform instead of scale to avoid compounding transforms on repeated resizes
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
+      baseGridCtx.fillStyle = dotColor;
+      for (let r = 0; r < rows; r++) {
+        const y = offsetY + r * GRID_SPACING;
+        for (let c = 0; c < cols; c++) {
+          const x = offsetX + c * GRID_SPACING;
+          if (r % FIDUCIAL_STRIDE === 0 && c % FIDUCIAL_STRIDE === 0) continue;
+          baseGridCtx.fillRect(Math.round(x), Math.round(y), 1, 1);
+        }
+      }
 
-    resize();
-    window.addEventListener('resize', resize, { passive: true });
-
-    // Pointer Swirl Vortex state
-    let ptrX = -9999;
-    let ptrY = -9999;
-
-    const onPointerMove = (e: PointerEvent) => {
-      ptrX = e.clientX;
-      ptrY = e.clientY;
-    };
-
-    const onPointerLeave = () => {
-      ptrX = -9999;
-      ptrY = -9999;
-    };
-
-    // Tap / Click Radial Ripple state
-    const ripples: RippleEvent[] = [];
-
-    const onPointerDown = (e: PointerEvent) => {
-      ripples.push({
-        x: e.clientX,
-        y: e.clientY,
-        t0: performance.now() / 1000,
-      });
-      if (ripples.length > 5) {
-        ripples.shift();
+      // Draw crisp 112px fiducial crosshairs using rects (zero lineTo)
+      baseGridCtx.fillStyle = fiducialColor;
+      for (let r = 0; r < rows; r += FIDUCIAL_STRIDE) {
+        const y = Math.round(offsetY + r * GRID_SPACING);
+        for (let c = 0; c < cols; c += FIDUCIAL_STRIDE) {
+          const x = Math.round(offsetX + c * GRID_SPACING);
+          baseGridCtx.fillRect(x - 2, y, 5, 1);
+          baseGridCtx.fillRect(x, y - 2, 1, 5);
+        }
       }
     };
 
-    window.addEventListener('pointermove', onPointerMove, { passive: true });
-    window.addEventListener('pointerleave', onPointerLeave, { passive: true });
-    window.addEventListener('pointerdown', onPointerDown, { passive: true });
+    const syncThemeBuffers = () => {
+      const isDark = themeRef.current === 'dark';
+      createSprites(isDark);
+      buildBaseGrid(isDark);
+      appliedTheme = themeRef.current;
+    };
 
-    // Visibility listener
-    const onVisibilityChange = () => {
-      isVisible = document.visibilityState !== 'hidden';
-      if (isVisible) {
-        animationFrameId = requestAnimationFrame(render);
+    const spawnMote = (x: number, y: number, dx: number, dy: number, nowSec: number, typeRoll?: number) => {
+      const i = moteCursor;
+      moteCursor = (moteCursor + 1) % MAX_MOTES;
+
+      const dist = Math.max(1, Math.hypot(dx, dy));
+      const nx = dx / dist;
+      const ny = dy / dist;
+      const curl = (Math.random() - 0.5) * 1.4;
+      const speed = 0.25 + Math.random() * 0.45;
+
+      // Tangential swirl + drift aligned with pointer vector
+      const swirlX = -ny * curl + nx * speed;
+      const swirlY = nx * curl + ny * speed;
+
+      moteX[i] = x + (Math.random() - 0.5) * 6;
+      moteY[i] = y + (Math.random() - 0.5) * 6;
+      moteVx[i] = swirlX;
+      moteVy[i] = swirlY;
+      moteSpawn[i] = nowSec;
+      moteLife[i] = 0.55 + Math.random() * 0.25;
+      moteSize[i] = 4.2 + Math.random() * 3.4;
+      if (typeRoll !== undefined) {
+        moteType[i] = typeRoll;
       } else {
+        const r = Math.random();
+        moteType[i] = r < 0.72 ? 1 : r < 0.9 ? 0 : 2;
+      }
+    };
+
+    const stopLoop = () => {
+      if (isAnimating) {
         cancelAnimationFrame(animationFrameId);
-      }
-    };
-    document.addEventListener('visibilitychange', onVisibilityChange);
-
-    // Reduced motion media query listener
-    const motionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const onMotionChange = (e: MediaQueryListEvent) => {
-      prefersReducedMotion = e.matches;
-    };
-    motionMql.addEventListener('change', onMotionChange);
-
-    // Compute target 3D formations
-    const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5)); // ~2.399963 rad
-
-    const updateTargetPositions = (formation: number, timeSec: number) => {
-      const isMobile = width < 768;
-      const minDim = Math.min(width, height);
-
-      if (formation === 0) {
-        // Formation 0: Fibonacci Orbital Sphere (expanded perimeter framing reading column)
-        const R0 = isMobile ? Math.max(200, minDim * 0.46) : Math.max(290, Math.min(410, minDim * 0.42));
-        const yaw = prefersReducedMotion ? 0 : timeSec * 0.16;
-        const cosYaw = Math.cos(yaw);
-        const sinYaw = Math.sin(yaw);
-        const betaZ = 0.22;
-        const cosBeta = Math.cos(betaZ);
-        const sinBeta = Math.sin(betaZ);
-
-        for (let i = 0; i < activeCount; i++) {
-          const yNorm = 1 - (2 * i + 1) / activeCount;
-          const rRing = Math.sqrt(Math.max(0, 1 - yNorm * yNorm));
-          const theta = i * GOLDEN_ANGLE;
-
-          const rawX = R0 * rRing * Math.cos(theta);
-          const rawY = R0 * yNorm;
-          const rawZ = R0 * rRing * Math.sin(theta);
-
-          // Rotate around Y
-          const rotX1 = rawX * cosYaw + rawZ * sinYaw;
-          const rotZ1 = -rawX * sinYaw + rawZ * cosYaw;
-
-          // Incline around Z
-          targetX[i] = rotX1 * cosBeta - rawY * sinBeta;
-          targetY[i] = rotX1 * sinBeta + rawY * cosBeta;
-          targetZ[i] = rotZ1;
-        }
-      } else if (formation === 1) {
-        // Formation 1: Topographic Elevation Wave (Archipelago terrain grid)
-        const cols = isMobile ? 30 : 45;
-        const rows = Math.ceil(activeCount / cols);
-        const wMesh = isMobile ? Math.max(420, width * 0.95) : Math.max(780, width * 0.72);
-        const dMesh = isMobile ? 320 : 480;
-        const alphaX = 0.87; // ~50 deg pitch
-        const cosAlpha = Math.cos(alphaX);
-        const sinAlpha = Math.sin(alphaX);
-
-        for (let i = 0; i < activeCount; i++) {
-          const c = i % cols;
-          const r = Math.floor(i / cols);
-          const u = c / (cols - 1) - 0.5;
-          const v = r / (rows - 1) - 0.5;
-
-          const rawX = u * wMesh;
-          const rawZ = v * dMesh;
-
-          let rawY: number;
-          if (prefersReducedMotion) {
-            rawY = 24 * Math.sin(0.01 * rawX) * Math.cos(0.014 * rawZ);
-          } else {
-            rawY =
-              38 * Math.sin(0.009 * rawX + 0.85 * timeSec) * Math.cos(0.012 * rawZ + 0.65 * timeSec) +
-              18 * Math.sin(0.018 * (rawX + rawZ) + 1.1 * timeSec) +
-              10 * Math.cos(0.015 * Math.sqrt(rawX * rawX + rawZ * rawZ) - 0.9 * timeSec);
-          }
-
-          targetX[i] = rawX;
-          targetY[i] = rawY * cosAlpha - rawZ * sinAlpha;
-          targetZ[i] = rawY * sinAlpha + rawZ * cosAlpha;
-        }
-      } else if (formation === 2) {
-        // Formation 2: Dual-Ring Cipher Torus (Concentric counter-rotating rings)
-        const outerCount = Math.floor(activeCount * 0.6);
-        const innerCount = activeCount - outerCount;
-
-        const R1 = isMobile ? Math.max(185, minDim * 0.42) : Math.max(270, minDim * 0.36);
-        const r1 = isMobile ? 34 : 46;
-        const omega1 = prefersReducedMotion ? 0 : timeSec * 0.22;
-
-        const R2 = R1 * 0.56;
-        const r2 = isMobile ? 20 : 28;
-        const omega2 = prefersReducedMotion ? 0 : -timeSec * 0.38;
-        const gamma = 0.60; // ~35 deg tilt
-        const cosGamma = Math.cos(gamma);
-        const sinGamma = Math.sin(gamma);
-
-        // Outer Torus
-        for (let i = 0; i < outerCount; i++) {
-          const v1 = (i / outerCount) * Math.PI * 2;
-          const u1 = ((i * 0.6180339887) % 1) * Math.PI * 2 + omega1;
-
-          targetX[i] = (R1 + r1 * Math.cos(v1)) * Math.cos(u1);
-          targetZ[i] = (R1 + r1 * Math.cos(v1)) * Math.sin(u1);
-          targetY[i] = r1 * Math.sin(v1);
-        }
-
-        // Inner Torus
-        for (let j = 0; j < innerCount; j++) {
-          const idx = outerCount + j;
-          const v2 = (j / innerCount) * Math.PI * 2;
-          const u2 = ((j * 0.6180339887) % 1) * Math.PI * 2 + omega2;
-
-          const rawX = (R2 + r2 * Math.cos(v2)) * Math.cos(u2);
-          const rawZ = (R2 + r2 * Math.cos(v2)) * Math.sin(u2);
-          const rawY = r2 * Math.sin(v2);
-
-          targetX[idx] = rawX;
-          targetY[idx] = rawY * cosGamma - rawZ * sinGamma;
-          targetZ[idx] = rawY * sinGamma + rawZ * cosGamma;
-        }
-      } else {
-        // Formation 3: Crystalline State Lattice (Deterministic cubic matrix)
-        const L = isMobile ? 9 : 11;
-        const spacing = isMobile ? 28 : 40;
-        const halfL = (L - 1) / 2;
-
-        const thetaY = Math.PI / 4;
-        const cosY = Math.cos(thetaY);
-        const sinY = Math.sin(thetaY);
-        const thetaX = Math.atan(1 / Math.SQRT2); // ~35.26 deg
-        const cosX = Math.cos(thetaX);
-        const sinX = Math.sin(thetaX);
-
-        const pulsePhase = (timeSec % 2.5) - 0.25;
-        const pulseAmp = prefersReducedMotion ? 0 : 0.05 * Math.exp(-(pulsePhase * pulsePhase) / 0.08);
-
-        for (let i = 0; i < activeCount; i++) {
-          const gx = (i % L) - halfL;
-          const gy = (Math.floor(i / L) % L) - halfL;
-          const gz = Math.floor(i / (L * L)) - halfL;
-
-          let rawX = gx * spacing;
-          let rawY = gy * spacing;
-          let rawZ = gz * spacing;
-
-          if (pulseAmp > 0.001) {
-            const dist = Math.sqrt(rawX * rawX + rawY * rawY + rawZ * rawZ);
-            const factor = 1.0 + pulseAmp * Math.cos(0.08 * dist);
-            rawX *= factor;
-            rawY *= factor;
-            rawZ *= factor;
-          }
-
-          // Isometric Yaw & Pitch
-          const rotX1 = rawX * cosY + rawZ * sinY;
-          const rotZ1 = -rawX * sinY + rawZ * cosY;
-
-          targetX[i] = rotX1;
-          targetY[i] = rawY * cosX - rotZ1 * sinX;
-          targetZ[i] = rawY * sinX + rotZ1 * cosX;
-        }
+        isAnimating = false;
       }
     };
 
-    const FOCAL_LENGTH = 750;
-    const SPRING_STIFFNESS = 0.045;
-    const SPRING_DAMPING = 0.84; // 1 - 0.16
+    const render = (nowMs: number) => {
+      if (!isVisible) {
+        stopLoop();
+        return;
+      }
 
-    // Primary 60/120fps Animation Loop
-    const render = (now: number) => {
-      if (!isVisible) return;
+      const nowSec = nowMs / 1000;
 
-      const timeSec = now / 1000;
-
-      // In-place rebuild of offscreen sprites when theme changes without restarting simulation
       if (themeRef.current !== appliedTheme) {
-        createSprites(themeRef.current === 'dark');
+        syncThemeBuffers();
       }
 
-      // Update target formation coordinates from ref
-      const currentFormation = activeFormationRef.current;
-      updateTargetPositions(currentFormation, timeSec);
+      const modalOpen = isModalOpenRef.current;
+      const loupeTarget = hasPointer && !modalOpen ? 1 : 0;
+      loupeStrength += (loupeTarget - loupeStrength) * 0.14;
 
-      // Prune expired ripples (age >= 1.1s) in-place before particle simulation
+      // Prune expired ripples in-place (duration 0.9s)
       let activeRipples = 0;
       for (let r = 0; r < ripples.length; r++) {
-        const age = timeSec - ripples[r].t0;
-        if (age >= 0 && age < 1.1) {
+        const age = nowSec - ripples[r].t0;
+        if (age >= 0 && age < 0.9) {
           ripples[activeRipples++] = ripples[r];
         }
       }
       ripples.length = activeRipples;
 
-      // Clear canvas buffer efficiently
+      // Blit static pre-rendered blueprint matrix
       ctx.clearRect(0, 0, width, height);
+      ctx.globalAlpha = 1.0;
+      ctx.drawImage(baseGridCanvas, 0, 0, width, height);
 
-      const centerX = width / 2;
-      const centerY = height / 2;
-      const vortexRadius = 140;
+      const offsetX = (width % GRID_SPACING) / 2;
+      const offsetY = (height % GRID_SPACING) / 2;
+      const cols = Math.floor((width - offsetX) / GRID_SPACING) + 1;
+      const rows = Math.floor((height - offsetY) / GRID_SPACING) + 1;
 
-      // Update physical simulation & render particles
-      for (let i = 0; i < activeCount; i++) {
-        // 1. Critically Damped Harmonic Spring Morphing (preserving momentum and continuity)
-        const fx = SPRING_STIFFNESS * (targetX[i] - currentX[i]);
-        const fy = SPRING_STIFFNESS * (targetY[i] - currentY[i]);
-        const fz = SPRING_STIFFNESS * (targetZ[i] - currentZ[i]);
+      // Interactive Cursor Blueprint Loupe (local bounding box only)
+      if (loupeStrength > 0.01 && ptrX > -9000 && !modalOpen) {
+        const minCol = Math.max(0, Math.floor((ptrX - LOUPE_RADIUS - offsetX) / GRID_SPACING));
+        const maxCol = Math.min(cols - 1, Math.ceil((ptrX + LOUPE_RADIUS - offsetX) / GRID_SPACING));
+        const minRow = Math.max(0, Math.floor((ptrY - LOUPE_RADIUS - offsetY) / GRID_SPACING));
+        const maxRow = Math.min(rows - 1, Math.ceil((ptrY + LOUPE_RADIUS - offsetY) / GRID_SPACING));
 
-        vx[i] = (vx[i] + fx) * SPRING_DAMPING;
-        vy[i] = (vy[i] + fy) * SPRING_DAMPING;
-        vz[i] = (vz[i] + fz) * SPRING_DAMPING;
+        const champagneSprite = sprites[1];
+        for (let r = minRow; r <= maxRow; r++) {
+          const gy = offsetY + r * GRID_SPACING;
+          for (let c = minCol; c <= maxCol; c++) {
+            const gx = offsetX + c * GRID_SPACING;
+            const dx = gx - ptrX;
+            const dy = gy - ptrY;
+            const dist = Math.hypot(dx, dy);
 
-        currentX[i] += vx[i];
-        currentY[i] += vy[i];
-        currentZ[i] += vz[i];
+            if (dist < LOUPE_RADIUS) {
+              const t = 1 - dist / LOUPE_RADIUS;
+              const falloff = t * t * (3 - 2 * t) * loupeStrength;
+              const push = prefersReducedMotion || dist < 1 ? 0 : (dx / dist) * falloff * 3.2;
+              const pushY = prefersReducedMotion || dist < 1 ? 0 : (dy / dist) * falloff * 3.2;
+              const isFiducial = r % FIDUCIAL_STRIDE === 0 && c % FIDUCIAL_STRIDE === 0;
+              const dotSize = (isFiducial ? 5.8 : 4.2) + falloff * 2.4;
 
-        // 2. 3D Pinhole Camera Projection
-        const zDepth = currentZ[i];
-        const perspective = FOCAL_LENGTH / Math.max(100, FOCAL_LENGTH + zDepth);
-        let screenX = centerX + currentX[i] * perspective;
-        let screenY = centerY + currentY[i] * perspective;
-
-        // 3. Tactile Physics: Pointer Swirl Vortex
-        if (ptrX > -9000 && !prefersReducedMotion) {
-          const dx = screenX - ptrX;
-          const dy = screenY - ptrY;
-          const dist = Math.hypot(dx, dy);
-
-          if (dist < vortexRadius && dist > 1) {
-            const w = Math.pow(1 - dist / vortexRadius, 2);
-            // Tangential swirl impulse + subtle radial repulsion
-            const swirlX = (-dy / dist) * 4.2 * w + (dx / dist) * 1.8 * w;
-            const swirlY = (dx / dist) * 4.2 * w + (dy / dist) * 1.8 * w;
-
-            vx[i] += swirlX;
-            vy[i] += swirlY;
+              ctx.globalAlpha = Math.min(0.42, (isFiducial ? 0.34 : 0.25) * falloff + 0.02);
+              ctx.drawImage(
+                champagneSprite,
+                Math.round(gx + push - dotSize / 2),
+                Math.round(gy + pushY - dotSize / 2),
+                Math.round(dotSize),
+                Math.round(dotSize)
+              );
+            }
           }
         }
+      }
 
-        // 4. Tactile Physics: Tap/Click Radial Ripple Wave
-        for (let r = 0; r < ripples.length; r++) {
-          const ripple = ripples[r];
-          const age = timeSec - ripple.t0;
-          const targetDist = age * 440; // 440 px/s wave velocity
-          const dx = screenX - ripple.x;
-          const dy = screenY - ripple.y;
-          const dist = Math.hypot(dx, dy);
-          const delta = dist - targetDist;
+      // Tap / Click Radial Grid Shockwave
+      if (!prefersReducedMotion && ripples.length > 0 && !modalOpen) {
+        const rippleSprite = sprites[1];
+        for (let rp = 0; rp < ripples.length; rp++) {
+          const ripple = ripples[rp];
+          const age = nowSec - ripple.t0;
+          const targetDist = age * 380;
+          const maxR = targetDist + 64;
+          const minR = Math.max(0, targetDist - 64);
 
-          if (Math.abs(delta) < 70) {
-            const envelope = Math.exp(-(delta * delta) / (2 * 36 * 36)) * Math.exp(-1.8 * age);
-            const pushFactor = (dist > 1 ? 1 : 0) * envelope * 24;
-            screenX += (dx / Math.max(1, dist)) * pushFactor;
-            screenY += (dy / Math.max(1, dist)) * pushFactor;
+          const minCol = Math.max(0, Math.floor((ripple.x - maxR - offsetX) / GRID_SPACING));
+          const maxCol = Math.min(cols - 1, Math.ceil((ripple.x + maxR - offsetX) / GRID_SPACING));
+          const minRow = Math.max(0, Math.floor((ripple.y - maxR - offsetY) / GRID_SPACING));
+          const maxRow = Math.min(rows - 1, Math.ceil((ripple.y + maxR - offsetY) / GRID_SPACING));
+
+          for (let r = minRow; r <= maxRow; r++) {
+            const gy = offsetY + r * GRID_SPACING;
+            for (let c = minCol; c <= maxCol; c++) {
+              const gx = offsetX + c * GRID_SPACING;
+              const dx = gx - ripple.x;
+              const dy = gy - ripple.y;
+              const dist = Math.hypot(dx, dy);
+
+              if (dist >= minR && dist <= maxR && dist > 1) {
+                const delta = dist - targetDist;
+                const envelope = Math.exp(-(delta * delta) / (2 * 24 * 24)) * Math.exp(-2.4 * age);
+                if (envelope > 0.02) {
+                  const push = envelope * 5.0;
+                  const sx = gx + (dx / dist) * push;
+                  const sy = gy + (dy / dist) * push;
+                  const size = 4.6 + envelope * 2.8;
+
+                  ctx.globalAlpha = Math.min(0.48, envelope * 0.52);
+                  ctx.drawImage(
+                    rippleSprite,
+                    Math.round(sx - size / 2),
+                    Math.round(sy - size / 2),
+                    Math.round(size),
+                    Math.round(size)
+                  );
+                }
+              }
+            }
           }
         }
+      }
 
-        // 5. Depth-of-Field & Subtle Breathing
-        const breathe = prefersReducedMotion
-          ? 0.85 + 0.15 * Math.sin(timeSec * 0.8 + phaseOffset[i])
-          : 1.0;
+      // Update & draw sparse cursor wake micro-particles via ctx.drawImage
+      let activeMotes = 0;
+      if (!prefersReducedMotion && !modalOpen) {
+        for (let i = 0; i < MAX_MOTES; i++) {
+          const age = nowSec - moteSpawn[i];
+          const life = moteLife[i];
+          if (age >= 0 && age < life) {
+            activeMotes++;
+            moteVx[i] *= 0.94;
+            moteVy[i] *= 0.94;
+            moteX[i] += moteVx[i];
+            moteY[i] += moteVy[i];
 
-        const drawSize = Math.max(2.2, Math.min(8.5, 5.4 * perspective * baseScale[i] * breathe));
+            const progress = age / life;
+            const alpha = (1 - progress) * (1 - progress) * 0.55;
+            const size = moteSize[i] * (0.65 + 0.35 * (1 - progress));
+            const sprite = sprites[moteType[i]] || sprites[1];
 
-        // Attenuate particle brightness behind the center reading column so typography stays clear
-        const isMobile = width < 768;
-        const rx = isMobile ? width * 0.44 : Math.min(480, width * 0.36);
-        const ry = isMobile ? height * 0.28 : Math.min(250, height * 0.30);
-        const ndx = (screenX - centerX) / Math.max(1, rx);
-        const ndy = (screenY - centerY) / Math.max(1, ry);
-        const rNorm = Math.min(1, Math.hypot(ndx, ndy));
-        const smooth = rNorm * rNorm * (3 - 2 * rNorm);
-        const centerAttenuation = 0.16 + 0.84 * smooth;
-        const themeCap = appliedTheme === 'dark' ? 0.58 : 0.34;
-        const baseAlpha = Math.min(themeCap, (0.14 + 0.48 * perspective) * (prefersReducedMotion ? 0.75 : 1.0));
-        const alpha = Math.max(0.04, baseAlpha * centerAttenuation);
-
-        // 6. Draw Pre-Rendered Offscreen Sprite Canvas (Zero per-frame allocations)
-        const sprite = sprites[spriteType[i]] || sprites[0];
-        ctx.globalAlpha = alpha;
-        ctx.drawImage(
-          sprite,
-          Math.round(screenX - drawSize / 2),
-          Math.round(screenY - drawSize / 2),
-          Math.round(drawSize),
-          Math.round(drawSize)
-        );
+            ctx.globalAlpha = alpha;
+            ctx.drawImage(
+              sprite,
+              Math.round(moteX[i] - size / 2),
+              Math.round(moteY[i] - size / 2),
+              Math.round(size),
+              Math.round(size)
+            );
+          }
+        }
       }
 
       ctx.globalAlpha = 1.0;
+
+      // Idle Auto-Sleep: settle cleanly to 0fps / 0% CPU when pointer & ripples rest
+      const settledLoupe = Math.abs(loupeTarget - loupeStrength) < 0.01;
+      if (settledLoupe && activeMotes === 0 && ripples.length === 0) {
+        loupeStrength = loupeTarget;
+        isAnimating = false;
+        return;
+      }
+
       animationFrameId = requestAnimationFrame(render);
     };
 
-    animationFrameId = requestAnimationFrame(render);
+    const wake = () => {
+      if (!isVisible || isAnimating) return;
+      isAnimating = true;
+      animationFrameId = requestAnimationFrame(render);
+    };
+    wakeRef.current = wake;
+
+    const resize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      syncThemeBuffers();
+      wake();
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      const nowSec = performance.now() / 1000;
+      const prevX = lastSpawnX;
+      const prevY = lastSpawnY;
+      ptrX = e.clientX;
+      ptrY = e.clientY;
+      hasPointer = true;
+
+      if (!prefersReducedMotion && !isModalOpenRef.current) {
+        if (prevX < -9000) {
+          lastSpawnX = ptrX;
+          lastSpawnY = ptrY;
+        } else {
+          const dx = ptrX - prevX;
+          const dy = ptrY - prevY;
+          if (Math.hypot(dx, dy) >= 14) {
+            spawnMote(ptrX, ptrY, dx, dy, nowSec);
+            lastSpawnX = ptrX;
+            lastSpawnY = ptrY;
+          }
+        }
+      }
+
+      wake();
+    };
+
+    const onPointerLeave = () => {
+      hasPointer = false;
+      lastSpawnX = -9999;
+      lastSpawnY = -9999;
+      wake();
+    };
+
+    const onPointerDown = (e: PointerEvent) => {
+      if (isModalOpenRef.current) return;
+      const nowSec = performance.now() / 1000;
+      ptrX = e.clientX;
+      ptrY = e.clientY;
+      hasPointer = true;
+
+      if (!prefersReducedMotion) {
+        ripples.push({ x: e.clientX, y: e.clientY, t0: nowSec });
+        if (ripples.length > 4) {
+          ripples.shift();
+        }
+        for (let k = 0; k < 5; k++) {
+          const angle = (k / 5) * Math.PI * 2 + Math.random() * 0.5;
+          spawnMote(e.clientX, e.clientY, Math.cos(angle) * 14, Math.sin(angle) * 14, nowSec);
+        }
+      }
+
+      wake();
+    };
+
+    const onVisibilityChange = () => {
+      isVisible = document.visibilityState !== 'hidden';
+      if (isVisible) {
+        wake();
+      } else {
+        stopLoop();
+      }
+    };
+
+    const motionMql = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onMotionChange = (e: MediaQueryListEvent) => {
+      prefersReducedMotion = e.matches;
+      wake();
+    };
+
+    resize();
+
+    window.addEventListener('resize', resize, { passive: true });
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('pointerleave', onPointerLeave, { passive: true });
+    window.addEventListener('pointerdown', onPointerDown, { passive: true });
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    motionMql.addEventListener('change', onMotionChange);
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
+      stopLoop();
+      wakeRef.current = null;
       window.removeEventListener('resize', resize);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerleave', onPointerLeave);
@@ -489,7 +472,7 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ activeFormation, t
       document.removeEventListener('visibilitychange', onVisibilityChange);
       motionMql.removeEventListener('change', onMotionChange);
     };
-  }, []); // Empty dependency array: runs ONCE on mount
+  }, []);
 
   return (
     <canvas

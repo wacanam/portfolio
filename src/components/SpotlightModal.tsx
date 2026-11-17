@@ -95,7 +95,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
       id: 'nav-overview',
       category: 'Navigation',
       title: 'Overview & Hero',
-      subtitle: 'Sculptural headline, proof strip, 3D particle field',
+      subtitle: 'Overview, metrics, résumé & direct links',
       icon: <ArrowRight className="w-4 h-4 text-[var(--accent-titanium)]" />,
       action: () => scrollTo('hero'),
     },
@@ -103,7 +103,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
       id: 'nav-systems',
       category: 'Navigation',
       title: 'Flagship Systems',
-      subtitle: 'Broadband Mapping, Clinic EZ, Higher-Ed EDCS',
+      subtitle: 'Broadband Mapping, Clinic EZ & ERP EZ, Institutional ETL',
       icon: <ArrowRight className="w-4 h-4 text-[var(--accent-titanium)]" />,
       action: () => scrollTo('systems'),
     },
@@ -137,7 +137,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
       id: 'blueprint-broadband',
       category: 'Blueprint',
       title: 'Blueprint: National Broadband Mapping',
-      subtitle: '100M+ spatial points · 42,000+ polygons · PostGIS',
+      subtitle: '100M+ spatial points · 42,000+ geometries · PostGIS',
       icon: <Layers className="w-4 h-4 text-[var(--accent-titanium)]" />,
       action: () => {
         onClose();
@@ -158,8 +158,8 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
     {
       id: 'blueprint-edcs',
       category: 'Blueprint',
-      title: 'Blueprint: Higher-Ed EDCS Engine',
-      subtitle: 'Deterministic state machine · Nationwide SUCs/HEIs',
+      title: 'Blueprint: Institutional ETL & Validation',
+      subtitle: 'RabbitMQ workers · Schema validation · Nationwide SUCs/HEIs',
       icon: <Layers className="w-4 h-4 text-[var(--accent-titanium)]" />,
       action: () => {
         onClose();
