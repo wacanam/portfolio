@@ -255,28 +255,57 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
       }
     };
 
-    const spawnMote = (x: number, y: number, dx: number, dy: number, nowSec: number) => {
+    const spawnMote = (
+      x: number,
+      y: number,
+      dx: number,
+      dy: number,
+      nowSec: number,
+      isClickBurst = false,
+      forcedType?: number
+    ) => {
       const i = moteCursor;
       moteCursor = (moteCursor + 1) % MAX_MOTES;
 
       const dist = Math.max(1, Math.hypot(dx, dy));
       const nx = dx / dist;
       const ny = dy / dist;
-      const curl = (Math.random() - 0.5) * 1.4;
-      const speed = 0.28 + Math.random() * 0.45;
+      const curl = (Math.random() - 0.5) * (isClickBurst ? 1.85 : 1.4);
+      const speed = isClickBurst
+        ? 2.1 + Math.random() * 3.6
+        : 0.28 + Math.random() * 0.45;
 
       const swirlX = -ny * curl + nx * speed;
       const swirlY = nx * curl + ny * speed;
+      const radialSpread = isClickBurst ? 4 + Math.random() * 14 : 0;
 
-      moteX[i] = x + (Math.random() - 0.5) * 6;
-      moteY[i] = y + (Math.random() - 0.5) * 6;
+      moteX[i] = x + nx * radialSpread + (Math.random() - 0.5) * (isClickBurst ? 10 : 6);
+      moteY[i] = y + ny * radialSpread + (Math.random() - 0.5) * (isClickBurst ? 10 : 6);
       moteVx[i] = swirlX;
       moteVy[i] = swirlY;
       moteSpawn[i] = nowSec;
-      moteLife[i] = 0.54 + Math.random() * 0.24;
-      moteSize[i] = 4.0 + Math.random() * 3.0;
-      const r = Math.random();
-      moteType[i] = r < 0.72 ? 1 : r < 0.9 ? 0 : 2;
+      moteLife[i] = isClickBurst
+        ? 1.85 + Math.random() * 0.95
+        : 0.54 + Math.random() * 0.24;
+      moteSize[i] = isClickBurst
+        ? 6.8 + Math.random() * 5.0
+        : 4.0 + Math.random() * 3.0;
+      if (forcedType !== undefined) {
+        moteType[i] = forcedType;
+      } else {
+        const r = Math.random();
+        moteType[i] = isClickBurst
+          ? r < 0.34
+            ? 1
+            : r < 0.67
+              ? 0
+              : 2
+          : r < 0.72
+            ? 1
+            : r < 0.9
+              ? 0
+              : 2;
+      }
     };
 
     const stopLoop = () => {
@@ -444,16 +473,17 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
           const life = moteLife[i];
           if (age >= 0 && age < life) {
             activeMotes++;
-            moteVx[i] *= 0.94;
-            moteVy[i] *= 0.94;
+            moteVx[i] *= 0.968;
+            moteVy[i] *= 0.968;
             moteX[i] += moteVx[i];
             moteY[i] += moteVy[i];
 
             const progress = age / life;
             const moteClear = textClearance(moteX[i], moteY[i]);
-            const alpha = (1 - progress) * (1 - progress) * (isDark ? 0.52 : 0.66) * moteClear;
+            const fade = 1 - Math.pow(progress, 1.5);
+            const alpha = fade * (isDark ? 0.68 : 0.78) * moteClear;
             if (alpha > 0.015) {
-              const size = moteSize[i] * (0.65 + 0.35 * (1 - progress));
+              const size = moteSize[i] * (0.56 + 0.44 * (1 - progress));
               const sprite = sprites[moteType[i]] || sprites[1];
               ctx.globalAlpha = alpha;
               ctx.drawImage(
@@ -556,9 +586,19 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
         if (ripples.length > 4) {
           ripples.shift();
         }
-        for (let k = 0; k < 5; k++) {
-          const angle = (k / 5) * Math.PI * 2 + Math.random() * 0.5;
-          spawnMote(e.clientX, e.clientY, Math.cos(angle) * 14, Math.sin(angle) * 14, nowSec);
+        const burstCount = 18;
+        const colorOffset = Math.floor(Math.random() * 3);
+        for (let k = 0; k < burstCount; k++) {
+          const angle = (k / burstCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.42;
+          spawnMote(
+            e.clientX,
+            e.clientY,
+            Math.cos(angle),
+            Math.sin(angle),
+            nowSec,
+            true,
+            (k + colorOffset) % 3
+          );
         }
       }
 
