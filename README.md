@@ -1,6 +1,6 @@
-# Wave C. Ambray — Portfolio SPA
+# Wave Cantery Ambray — Portfolio SPA
 
-Minimal, Apple Pro–inspired Single Page Application portfolio for **Wave C. Ambray** (Full-Stack Software Engineer).
+Minimal, Apple Pro–inspired Single Page Application portfolio for **Wave Cantery Ambray** (Full-Stack Software Engineer).
 
 - **Live Site:** https://wacanam.github.io/portfolio/
 

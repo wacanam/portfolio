@@ -2,7 +2,7 @@
 
 /**
  * ==============================================================================
- * Wave C. Ambray Portfolio SPA — Requirement-Driven E2E Test Suite (Tiers 1–4)
+ * Wave Cantery Ambray Portfolio SPA — Requirement-Driven E2E Test Suite (Tiers 1–4)
  * ==============================================================================
  * Opaque-box, requirement-driven end-to-end test runner verifying all functional,
  * architectural, boundary, cross-feature, and build pipeline specifications
@@ -201,7 +201,7 @@ async function getAllSourceFiles(dir, exts = ['.ts', '.tsx', '.js', '.jsx', '.cs
 
 async function main() {
   console.log(`${colors.bold}${colors.magenta}================================================================================${colors.reset}`);
-  console.log(`${colors.bold}${colors.white}   Wave C. Ambray Portfolio SPA — Opaque-Box E2E Test Suite (Tiers 1–4)${colors.reset}`);
+  console.log(`${colors.bold}${colors.white}   Wave Cantery Ambray Portfolio SPA — Opaque-Box E2E Test Suite (Tiers 1–4)${colors.reset}`);
   console.log(`${colors.dim}   Target Root: ${rootDir}${colors.reset}`);
   console.log(`${colors.bold}${colors.magenta}================================================================================${colors.reset}`);
 
@@ -286,7 +286,7 @@ async function main() {
     assert.ok(existsSync(sitemapPath), 'sitemap.xml missing');
 
     const manifest = JSON.parse(await safeReadFile(manifestPath));
-    assert.ok(manifest.name && manifest.name.includes('Wave C. Ambray'), 'Manifest name mismatch');
+    assert.ok(manifest.name && manifest.name.includes('Wave Cantery Ambray'), 'Manifest name mismatch');
     assert.ok(Array.isArray(manifest.icons) && manifest.icons.length >= 2, 'Manifest icons missing or incomplete');
 
     const robots = await safeReadFile(robotsPath);
@@ -456,9 +456,9 @@ async function main() {
     assert.ok(content.includes('20K+') || content.includes('20,000+'), '20K+ metric missing');
   });
 
-  await runTest('T1-CONTENT-06', 'Authentic contact coordinates (Wave C. Ambray, wacanam20@gmail.com, WhatsApp, Cagayan de Oro)', 1, 'Verified Content', async () => {
+  await runTest('T1-CONTENT-06', 'Authentic contact coordinates (Wave Cantery Ambray, wacanam20@gmail.com, WhatsApp, Cagayan de Oro)', 1, 'Verified Content', async () => {
     const content = await safeReadFile(path.join(srcDir, 'data', 'portfolio.ts'));
-    assert.ok(content.includes('Wave C. Ambray'), 'Name mismatch');
+    assert.ok(content.includes('Wave Cantery Ambray'), 'Name mismatch');
     assert.ok(content.includes('wacanam20@gmail.com'), 'Email mismatch');
     assert.ok(content.includes('+63 965 429 7640') || content.includes('639654297640'), 'Phone mismatch');
     assert.ok(content.includes('Cagayan de Oro'), 'Location mismatch');
@@ -860,20 +860,21 @@ async function main() {
     assert.ok(canvasCode.includes('isModalOpenRef.current'), 'ParticleField.tsx does not pause interactive wake during open modal');
   });
 
-  await runTest('T3-CROSS-03', 'Hero keeps clean 4-metric spec grid without AI-demo 3D formation pills', 3, 'Hero Clarity', async () => {
+  await runTest('T3-CROSS-03', 'Hero keeps clean 4-metric spec grid and slow marquee without 3D morph pills', 3, 'Hero Clarity', async () => {
     const heroCode = await safeReadFile(path.join(srcDir, 'components', 'Hero.tsx'));
+    const cssCode = await safeReadFile(path.join(srcDir, 'index.css'));
     assert.ok(!heroCode.includes('3D MORPH') && !heroCode.includes('onSelectFormation'), 'Artificial 3D morph pills must be removed from Hero.tsx');
     assert.ok(heroCode.includes('6+ Yrs') && heroCode.includes('100M+') && heroCode.includes('20K+'), 'Hero 4-metric architectural <dl> grid missing');
+    assert.ok(heroCode.includes('stack-marquee-viewport') && cssCode.includes('stack-marquee-left'), 'Hero slow typographic stack marquee missing');
   });
 
-  await runTest('T3-CROSS-04', 'Stack Marquee skill selection dynamically highlights matching career timeline rows', 3, 'Stack & Career', async () => {
+  await runTest('T3-CROSS-04', 'ExperienceSpec retains interactive skill chips and renders muted employment type below company', 3, 'Stack & Career', async () => {
     const specFile = path.join(srcDir, 'components', 'ExperienceSpec.tsx');
-    const cssCode = await safeReadFile(path.join(srcDir, 'index.css'));
     assert.ok(existsSync(specFile), 'ExperienceSpec.tsx missing');
     const specCode = await safeReadFile(specFile);
     assert.ok(specCode.includes('selectedSkill') || specCode.includes('onSelectSkill'), 'Skill selection logic missing in ExperienceSpec');
     assert.ok(specCode.includes('isMatch') || specCode.includes('highlight') || specCode.includes('ring-'), 'Career row highlighting logic missing');
-    assert.ok(specCode.includes('stack-marquee-viewport') && cssCode.includes('stack-marquee-left'), 'Smooth GPU-composited stack marquee missing');
+    assert.ok(specCode.includes('splitRoleAndType') && specCode.includes('employmentType'), 'Muted employment label separation below company missing');
   });
 
   await runTest('T3-CROSS-05', 'Spotlight Cmd+K palette exposes instant actions linking to architecture blueprints', 3, 'Spotlight & Modals', async () => {
@@ -963,7 +964,7 @@ async function main() {
     const distHtml = path.join(distDir, 'index.html');
     assert.ok(existsSync(distHtml), 'dist/index.html missing after production build');
     const html = await safeReadFile(distHtml);
-    assert.ok(html.includes('<html') && html.includes('Wave C. Ambray'), 'dist/index.html does not contain valid built markup');
+    assert.ok(html.includes('<html') && html.includes('Wave Cantery Ambray'), 'dist/index.html does not contain valid built markup');
     
     // Check bundled assets directory
     const distAssetsDir = path.join(distDir, 'assets');
@@ -990,7 +991,7 @@ async function main() {
     assert.ok(ldJsonMatch, 'JSON-LD structured data script missing in index.html');
     const schema = JSON.parse(ldJsonMatch[1]);
     assert.strictEqual(schema['@type'], 'Person', 'JSON-LD schema @type must be Person');
-    assert.strictEqual(schema.name, 'Wave C. Ambray', 'JSON-LD person name mismatch');
+    assert.strictEqual(schema.name, 'Wave Cantery Ambray', 'JSON-LD person name mismatch');
   });
 
   await runTest('T4-WORK-05', 'Crawl, cache, and manifest discovery links validation', 4, 'Crawl Discovery', async () => {

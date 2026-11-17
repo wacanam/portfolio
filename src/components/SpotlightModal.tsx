@@ -354,7 +354,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
             <span>↑↓ Navigate</span>
             <span>↵ Select</span>
           </div>
-          <span>Wave C. Ambray Portfolio</span>
+          <span>Wave Cantery Ambray Portfolio</span>
         </div>
       </div>
     </dialog>

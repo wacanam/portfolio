@@ -1,6 +1,10 @@
 import React from 'react';
 import { Download, ArrowRight, Github, Linkedin, Mail, MessageSquare } from 'lucide-react';
-import { contactData } from '../data/portfolio';
+import { contactData, skillCategories } from '../data/portfolio';
+
+const heroMarqueeSkills = (
+  skillCategories.find((c) => c.id === 'all')?.skills ?? []
+).slice(0, 24);
 
 export const Hero: React.FC = () => {
   const scrollTo = (id: string) => {
@@ -13,7 +17,7 @@ export const Hero: React.FC = () => {
   return (
     <section
       id="hero"
-      className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-20 text-center select-none"
+      className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-14 text-center select-none"
     >
       <div className="relative max-w-3xl w-full mx-auto py-8 px-2 sm:px-6 flex flex-col items-center">
         {/* Top Availability Kicker */}
@@ -25,8 +29,8 @@ export const Hero: React.FC = () => {
         </div>
 
         {/* Sculptural Headline */}
-        <h1 className="text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight leading-[1.04] mb-5 text-metallic max-w-4xl">
-          Wave C. Ambray
+        <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.06] mb-5 text-metallic max-w-4xl">
+          Wave Cantery Ambray
         </h1>
 
         {/* Radical Word Economy Statement (11 words <= 16 words) */}
@@ -71,7 +75,7 @@ export const Hero: React.FC = () => {
         </dl>
 
         {/* Primary CTAs */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 mb-10">
+        <div className="flex flex-col sm:flex-row items-center gap-4 mb-9">
           <button
             onClick={() => scrollTo('systems')}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-medium text-sm tracking-wide transition-all hover:opacity-90 active:scale-[0.98] shadow-lg"
@@ -91,7 +95,7 @@ export const Hero: React.FC = () => {
         </div>
 
         {/* Quiet Social Links */}
-        <div className="flex items-center gap-5 text-[var(--text-secondary)]">
+        <div className="flex items-center gap-5 text-[var(--text-secondary)] mb-10">
           <a
             href={contactData.githubUrl}
             target="_blank"
@@ -127,6 +131,48 @@ export const Hero: React.FC = () => {
             <MessageSquare className="w-4 h-4" />
           </a>
         </div>
+
+        {/* Quiet Slow Typographic Stack Marquee */}
+        {heroMarqueeSkills.length > 0 && (
+          <div
+            className="w-full max-w-2xl border-t border-[var(--border-hairline)] pt-5"
+            aria-label="Core engineering stack"
+          >
+            <div className="stack-marquee-viewport py-1">
+              <div
+                className="stack-marquee-track"
+                style={{ animationDuration: '84s' }}
+              >
+                {[0, 1].map((dupIdx) => {
+                  const isDuplicate = dupIdx === 1;
+                  return (
+                    <div
+                      key={dupIdx}
+                      aria-hidden={isDuplicate || undefined}
+                      className={`flex items-center shrink-0 text-xs font-mono tracking-wide text-[var(--text-secondary)] ${
+                        isDuplicate ? 'stack-marquee-dup' : ''
+                      }`}
+                    >
+                      {heroMarqueeSkills.map((skill) => (
+                        <React.Fragment key={`${dupIdx}-${skill}`}>
+                          <span className="whitespace-nowrap hover:text-[var(--text-primary)] transition-colors">
+                            {skill}
+                          </span>
+                          <span
+                            className="mx-3.5 text-[var(--border-subtle)] select-none"
+                            aria-hidden="true"
+                          >
+                            ·
+                          </span>
+                        </React.Fragment>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

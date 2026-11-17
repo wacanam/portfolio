@@ -45,7 +45,7 @@ const resumeHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Wave C. Ambray — Full-Stack &amp; Backend Software Engineer</title>
+  <title>Wave Cantery Ambray — Full-Stack &amp; Backend Software Engineer</title>
   <style>
     @page {
       size: A4;
@@ -255,7 +255,7 @@ const resumeHtml = `<!DOCTYPE html>
   <section class="sheet">
     <div class="sheet-body">
       <header>
-        <h1>Wave C. Ambray</h1>
+        <h1>Wave Cantery Ambray</h1>
         <div class="headline">
           Full-Stack &amp; Backend Software Engineer — C#/.NET · TypeScript · Node.js · React &amp; Next.js
         </div>
@@ -307,7 +307,7 @@ const resumeHtml = `<!DOCTYPE html>
       </div>
     </div>
     <footer class="sheet-footer">
-      <span>Wave C. Ambray — Résumé</span>
+      <span>Wave Cantery Ambray — Résumé</span>
       <span>Page 1 of 3</span>
     </footer>
   </section>
@@ -393,7 +393,7 @@ const resumeHtml = `<!DOCTYPE html>
       </div>
     </div>
     <footer class="sheet-footer">
-      <span>Wave C. Ambray — Résumé</span>
+      <span>Wave Cantery Ambray — Résumé</span>
       <span>Page 2 of 3</span>
     </footer>
   </section>
@@ -448,7 +448,7 @@ const resumeHtml = `<!DOCTYPE html>
       </div>
     </div>
     <footer class="sheet-footer">
-      <span>Wave C. Ambray — Résumé</span>
+      <span>Wave Cantery Ambray — Résumé</span>
       <span>Page 3 of 3</span>
     </footer>
   </section>

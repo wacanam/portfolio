@@ -164,7 +164,7 @@ export const profileBlurDataUri = profileMeta.blurDataUri;
   <text x="108" y="101" font-family="monospace, -apple-system" font-size="14" font-weight="600" letter-spacing="2" fill="#10B981">AVAILABLE FOR REMOTE ROLES</text>
 
   <!-- Headline -->
-  <text x="80" y="215" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="72" font-weight="700" letter-spacing="-2.5" fill="url(#titaniumGrad)">Wave C. Ambray</text>
+  <text x="80" y="215" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="56" font-weight="700" letter-spacing="-1.8" fill="url(#titaniumGrad)">Wave Cantery Ambray</text>
 
   <!-- Subtitle -->
   <text x="82" y="280" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif" font-size="30" font-weight="500" letter-spacing="-0.5" fill="#D6C5A9">Full-Stack Software Engineer</text>
@@ -200,9 +200,9 @@ export const profileBlurDataUri = profileMeta.blurDataUri;
 
   // 7. PWA manifest, robots.txt, sitemap.xml
   const webmanifest = {
-    name: 'Wave C. Ambray — Full-Stack Software Engineer',
+    name: 'Wave Cantery Ambray — Full-Stack Software Engineer',
     short_name: 'Wave Ambray',
-    description: 'Portfolio of Wave C. Ambray, Full-Stack & Backend Software Engineer specializing in distributed .NET & TypeScript architectures.',
+    description: 'Portfolio of Wave Cantery Ambray, Full-Stack & Backend Software Engineer specializing in distributed .NET & TypeScript architectures.',
     start_url: basePath,
     display: 'standalone',
     background_color: '#050507',

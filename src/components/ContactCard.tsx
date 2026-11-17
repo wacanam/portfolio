@@ -75,7 +75,7 @@ export const ContactCard: React.FC = () => {
                 />
                 <img
                   src={profileMeta.src400Webp}
-                  alt="Wave C. Ambray studio portrait"
+                  alt="Wave Cantery Ambray studio portrait"
                   width={400}
                   height={400}
                   loading="lazy"
