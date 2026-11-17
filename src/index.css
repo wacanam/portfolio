@@ -140,3 +140,59 @@ dialog.glass-sheet,
     display: table-row !important;
   }
 }
+
+/* Smooth GPU-composited horizontal stack marquee */
+@keyframes stack-marquee-left {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes stack-marquee-right {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.stack-marquee-viewport {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%);
+}
+
+.stack-marquee-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  will-change: transform;
+  animation: stack-marquee-left 68s linear infinite;
+}
+
+.stack-marquee-track-reverse {
+  animation: stack-marquee-right 74s linear infinite;
+}
+
+.stack-marquee-viewport:hover .stack-marquee-track,
+.stack-marquee-viewport:focus-within .stack-marquee-track {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stack-marquee-viewport {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .stack-marquee-track {
+    animation: none;
+  }
+  .stack-marquee-dup {
+    display: none;
+  }
+}

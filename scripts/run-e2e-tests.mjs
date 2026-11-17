@@ -866,12 +866,14 @@ async function main() {
     assert.ok(heroCode.includes('6+ Yrs') && heroCode.includes('100M+') && heroCode.includes('20K+'), 'Hero 4-metric architectural <dl> grid missing');
   });
 
-  await runTest('T3-CROSS-04', 'Stack Matrix skill pill click dynamically highlights matching career timeline rows', 3, 'Stack & Career', async () => {
+  await runTest('T3-CROSS-04', 'Stack Marquee skill selection dynamically highlights matching career timeline rows', 3, 'Stack & Career', async () => {
     const specFile = path.join(srcDir, 'components', 'ExperienceSpec.tsx');
+    const cssCode = await safeReadFile(path.join(srcDir, 'index.css'));
     assert.ok(existsSync(specFile), 'ExperienceSpec.tsx missing');
     const specCode = await safeReadFile(specFile);
     assert.ok(specCode.includes('selectedSkill') || specCode.includes('onSelectSkill'), 'Skill selection logic missing in ExperienceSpec');
     assert.ok(specCode.includes('isMatch') || specCode.includes('highlight') || specCode.includes('ring-'), 'Career row highlighting logic missing');
+    assert.ok(specCode.includes('stack-marquee-viewport') && cssCode.includes('stack-marquee-left'), 'Smooth GPU-composited stack marquee missing');
   });
 
   await runTest('T3-CROSS-05', 'Spotlight Cmd+K palette exposes instant actions linking to architecture blueprints', 3, 'Spotlight & Modals', async () => {

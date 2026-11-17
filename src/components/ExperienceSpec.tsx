@@ -18,6 +18,14 @@ export const ExperienceSpec: React.FC<ExperienceSpecProps> = ({
   const onSelectSkill = externalOnSelect || setInternalSkill;
 
   const currentCategory = skillCategories.find((c) => c.id === activeTab) || skillCategories[0];
+  const categorySkills = currentCategory.skills;
+  const marqueeLanes =
+    categorySkills.length > 20
+      ? [
+          categorySkills.slice(0, Math.ceil(categorySkills.length / 2)),
+          categorySkills.slice(Math.ceil(categorySkills.length / 2)),
+        ]
+      : [categorySkills];
 
   return (
     <section id="experience" className="relative py-24 px-6 max-w-6xl mx-auto select-none">
@@ -74,30 +82,69 @@ export const ExperienceSpec: React.FC<ExperienceSpecProps> = ({
         )}
       </div>
 
-      {/* Skill Pills Matrix */}
-      <div className="rounded-3xl glass-dock p-6 sm:p-7 border border-[var(--border-hairline)] shadow-xl mb-12">
-        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[var(--border-hairline)]">
-          <Layers className="w-4 h-4 text-[var(--accent-titanium)]" />
-          <span className="text-xs font-mono uppercase tracking-wider text-[var(--text-secondary)] font-semibold">
-            {currentCategory.name} · Click skill to highlight matching career roles
+      {/* Slow Interactive Stack Marquee (pauses gently on hover/focus; click any item to filter career table) */}
+      <div className="border-y border-[var(--border-subtle)] py-5 mb-12 space-y-3">
+        <div className="flex items-center justify-between gap-2 pb-1">
+          <div className="flex items-center gap-2">
+            <Layers className="w-3.5 h-3.5 text-[var(--accent-titanium)]" />
+            <span className="text-[11px] font-mono uppercase tracking-wider text-[var(--text-secondary)] font-semibold">
+              {currentCategory.name} · Hover to pause · Click stack to highlight matching roles
+            </span>
+          </div>
+          <span className="hidden sm:inline text-[10px] font-mono text-[var(--text-tertiary)] uppercase tracking-wider">
+            {categorySkills.length} Technologies
           </span>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {currentCategory.skills.map((skill) => {
-            const isSelected = selectedSkill === skill;
+        <div className="space-y-2.5">
+          {marqueeLanes.map((laneSkills, laneIdx) => {
+            const isReverse = laneIdx % 2 === 1;
+            const durationSec = Math.max(38, Math.round(laneSkills.length * 2.9));
+
             return (
-              <button
-                key={skill}
-                onClick={() => onSelectSkill(isSelected ? null : skill)}
-                className={`px-3 py-1.5 rounded-full text-xs font-mono transition-all duration-200 border ${
-                  isSelected
-                    ? 'bg-[var(--accent-titanium)] text-[var(--bg-primary)] font-semibold border-[var(--accent-titanium)] shadow-md scale-105'
-                    : 'bg-[var(--surface-card)] text-[var(--text-primary)] border-[var(--border-hairline)] hover:border-[var(--border-subtle)] hover:bg-[var(--surface-card-strong)]'
-                }`}
-              >
-                {skill}
-              </button>
+              <div key={`${currentCategory.id}-${laneIdx}`} className="stack-marquee-viewport py-1">
+                <div
+                  className={`stack-marquee-track ${isReverse ? 'stack-marquee-track-reverse' : ''}`}
+                  style={{ animationDuration: `${durationSec}s` }}
+                >
+                  {[0, 1].map((dupIdx) => {
+                    const isDuplicate = dupIdx === 1;
+                    return (
+                      <div
+                        key={dupIdx}
+                        aria-hidden={isDuplicate || undefined}
+                        className={`flex items-center shrink-0 ${isDuplicate ? 'stack-marquee-dup' : ''}`}
+                      >
+                        {laneSkills.map((skill) => {
+                          const isSelected = selectedSkill === skill;
+                          return (
+                            <React.Fragment key={`${dupIdx}-${skill}`}>
+                              <button
+                                type="button"
+                                tabIndex={isDuplicate ? -1 : undefined}
+                                onClick={() => onSelectSkill(isSelected ? null : skill)}
+                                className={`px-2.5 py-1 rounded-md text-xs sm:text-sm font-mono whitespace-nowrap transition-colors ${
+                                  isSelected
+                                    ? 'bg-[var(--accent-titanium)] text-[var(--bg-primary)] font-semibold'
+                                    : 'text-[var(--text-primary)]/90 hover:text-[var(--accent-titanium)] hover:bg-[var(--surface-card)]'
+                                }`}
+                              >
+                                {skill}
+                              </button>
+                              <span
+                                className="mx-3 text-xs font-mono text-[var(--border-subtle)] select-none"
+                                aria-hidden="true"
+                              >
+                                ·
+                              </span>
+                            </React.Fragment>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
