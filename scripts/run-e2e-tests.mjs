@@ -394,10 +394,11 @@ async function main() {
     assert.ok(!code.includes('ctx.shadowBlur ='), 'Forbidden per-frame shadowBlur allocation found in render loop!');
   });
 
-  await runTest('T1-CANVAS-04', 'Animated 28px pattern lattice with ambient wave drift and cursor repulsion', 1, '3D Canvas', async () => {
+  await runTest('T1-CANVAS-04', 'Animated 28px pattern lattice with text-clearance zones and mutual cursor physics', 1, '3D Canvas', async () => {
     const code = await safeReadFile(path.join(srcDir, 'components', 'ParticleField.tsx'));
     assert.ok(code.includes('GRID_SPACING = 28') && (code.includes('waveX') || code.includes('Math.sin')), 'Animated 28px pattern lattice missing');
     assert.ok(code.includes('LOUPE_RADIUS') && code.includes('loupeFalloff'), 'Interactive cursor repulsion falloff missing');
+    assert.ok(code.includes('measureTextZones') && code.includes('textClearance'), 'DOM-aware text protection zones missing');
   });
 
   await runTest('T1-CANVAS-05', 'Tactile physics: pointer swirl vortex and tap/click radial ripple', 1, '3D Canvas', async () => {

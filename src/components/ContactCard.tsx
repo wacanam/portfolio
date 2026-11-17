@@ -51,46 +51,54 @@ export const ContactCard: React.FC = () => {
 
       <div className="rounded-3xl glass-dock p-8 sm:p-12 border border-[var(--border-hairline)] shadow-2xl relative overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 items-center">
-          {/* Portrait Column */}
+          {/* Portrait Column — seamless radial & bottom alpha feather into background card */}
           <div className="md:col-span-5 flex flex-col items-center">
-            <div className="relative w-56 sm:w-64 aspect-square rounded-2xl overflow-hidden border border-[var(--accent-titanium)]/35 shadow-2xl group">
-              {/* Blur-up placeholder background Data URI */}
+            <div
+              className="relative w-64 sm:w-72 aspect-square group"
+              style={{
+                WebkitMaskImage:
+                  'radial-gradient(closest-side at 50% 44%, #000 48%, rgba(0, 0, 0, 0.72) 68%, rgba(0, 0, 0, 0.22) 86%, transparent 100%)',
+                maskImage:
+                  'radial-gradient(closest-side at 50% 44%, #000 48%, rgba(0, 0, 0, 0.72) 68%, rgba(0, 0, 0, 0.22) 86%, transparent 100%)',
+              }}
+            >
               <div
-                className="absolute inset-0 bg-cover bg-center filter blur-md scale-105"
-                style={{ backgroundImage: `url(${profileMeta.blurDataUri})` }}
-                aria-hidden="true"
-              />
-
-              {/* Multi-format responsive picture with AVIF and WebP */}
-              <picture className="relative z-10 block w-full h-full">
-                <source
-                  srcSet={`${profileMeta.src800Avif} 800w, ${profileMeta.src400Avif} 400w`}
-                  type="image/avif"
-                  sizes="(max-width: 640px) 224px, 256px"
-                />
-                <source
-                  srcSet={`${profileMeta.src800Webp} 800w, ${profileMeta.src400Webp} 400w`}
-                  type="image/webp"
-                  sizes="(max-width: 640px) 224px, 256px"
-                />
-                <img
-                  src={profileMeta.src400Webp}
-                  alt="Wave Cantery Ambray studio portrait"
-                  width={400}
-                  height={400}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </picture>
-
-              {/* Bottom vignette fade */}
-              <div
-                className="absolute inset-0 z-20 pointer-events-none"
+                className="relative w-full h-full overflow-hidden"
                 style={{
-                  background: 'linear-gradient(to top, var(--bg-primary) 0%, transparent 28%)',
+                  WebkitMaskImage: 'linear-gradient(to top, transparent 0%, #000 26%)',
+                  maskImage: 'linear-gradient(to top, transparent 0%, #000 26%)',
                 }}
-              />
+              >
+                {/* Blur-up placeholder background Data URI */}
+                <div
+                  className="absolute inset-0 bg-cover bg-center filter blur-md scale-105"
+                  style={{ backgroundImage: `url(${profileMeta.blurDataUri})` }}
+                  aria-hidden="true"
+                />
+
+                {/* Multi-format responsive picture with AVIF and WebP */}
+                <picture className="relative z-10 block w-full h-full">
+                  <source
+                    srcSet={`${profileMeta.src800Avif} 800w, ${profileMeta.src400Avif} 400w`}
+                    type="image/avif"
+                    sizes="(max-width: 640px) 256px, 288px"
+                  />
+                  <source
+                    srcSet={`${profileMeta.src800Webp} 800w, ${profileMeta.src400Webp} 400w`}
+                    type="image/webp"
+                    sizes="(max-width: 640px) 256px, 288px"
+                  />
+                  <img
+                    src={profileMeta.src400Webp}
+                    alt="Wave Cantery Ambray studio portrait"
+                    width={400}
+                    height={400}
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  />
+                </picture>
+              </div>
             </div>
 
             <div className="mt-4 text-center">
