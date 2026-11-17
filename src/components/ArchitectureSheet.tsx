@@ -126,10 +126,10 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({
 
         {/* 5-Node Interactive Architecture Pipeline */}
         <section
-          className="rounded-3xl glass-dock p-6 sm:p-8 border border-[var(--border-subtle)] mb-12"
+          className="py-4 mb-14"
           aria-label="5-Node Distributed Architecture Pipeline"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 pb-4 border-b border-[var(--border-hairline)]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 pb-3 border-b border-[var(--border-hairline)]">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-titanium)] font-semibold">
               <Layers className="w-4 h-4" />
               <span>5-Node System Flow</span>
@@ -139,7 +139,7 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5 mb-8">
             {system.nodes.map((node, idx) => {
               const isSelected = activeNodeIdx === idx;
               return (
@@ -149,7 +149,7 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({
                   className={`text-left p-3.5 rounded-2xl transition-all border ${
                     isSelected
                       ? 'bg-[var(--accent-titanium)] text-[var(--bg-primary)] font-semibold border-[var(--accent-titanium)] shadow-sm'
-                      : 'bg-[var(--surface-card)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border-[var(--border-hairline)] hover:border-[var(--border-subtle)]'
+                      : 'bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-card)] border-[var(--border-hairline)] hover:border-[var(--border-subtle)]'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
@@ -174,7 +174,7 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({
 
           {/* Active Node Inspector */}
           {activeNode && (
-            <div className="p-5 sm:p-6 rounded-2xl bg-[var(--surface-card-strong)] border border-[var(--border-subtle)] text-sm text-[var(--text-secondary)]">
+            <div className="border-l-2 border-[var(--accent-titanium)] pl-5 sm:pl-6 py-2 text-sm text-[var(--text-secondary)]">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-3 border-b border-[var(--border-hairline)]">
                 <div className="font-semibold text-[var(--text-primary)]">
                   {activeNode.name} ·{' '}
@@ -194,8 +194,8 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({
         </section>
 
         {/* Grounded 2x2 Architecture Breakdown */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          <div className="rounded-3xl glass-dock p-6 sm:p-7 border border-[var(--border-hairline)]">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10 mb-14">
+          <div className="border-t border-[var(--border-subtle)] pt-5">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-titanium)] mb-3 font-semibold">
               <Shield className="w-4 h-4" />
               <span>Problem Context</span>
@@ -205,7 +205,7 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({
             </p>
           </div>
 
-          <div className="rounded-3xl glass-dock p-6 sm:p-7 border border-[var(--border-hairline)]">
+          <div className="border-t border-[var(--border-subtle)] pt-5">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-titanium)] mb-3 font-semibold">
               <Layers className="w-4 h-4" />
               <span>System Architecture</span>
@@ -215,7 +215,7 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({
             </p>
           </div>
 
-          <div className="rounded-3xl glass-dock p-6 sm:p-7 border border-[var(--border-hairline)]">
+          <div className="border-t border-[var(--border-subtle)] pt-5">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-titanium)] mb-3 font-semibold">
               <Cpu className="w-4 h-4" />
               <span>Infrastructure &amp; Scaling</span>
@@ -225,7 +225,7 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({
             </p>
           </div>
 
-          <div className="rounded-3xl glass-dock p-6 sm:p-7 border border-[var(--border-hairline)]">
+          <div className="border-t border-[var(--border-subtle)] pt-5">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-titanium)] mb-3 font-semibold">
               <CheckCircle2 className="w-4 h-4" />
               <span>Delivery &amp; Team Scope</span>

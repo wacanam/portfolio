@@ -51,24 +51,10 @@ export const ContactCard: React.FC = () => {
 
       <div className="rounded-3xl glass-dock p-8 sm:p-12 border border-[var(--border-hairline)] shadow-2xl relative overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 items-center">
-          {/* Portrait Column — seamless radial & bottom alpha feather into background card */}
+          {/* Portrait Column — seamless radial fade in Dark Mode, clean borderless medallion in Light Mode */}
           <div className="md:col-span-5 flex flex-col items-center">
-            <div
-              className="relative w-64 sm:w-72 aspect-square group"
-              style={{
-                WebkitMaskImage:
-                  'radial-gradient(closest-side at 50% 44%, #000 48%, rgba(0, 0, 0, 0.72) 68%, rgba(0, 0, 0, 0.22) 86%, transparent 100%)',
-                maskImage:
-                  'radial-gradient(closest-side at 50% 44%, #000 48%, rgba(0, 0, 0, 0.72) 68%, rgba(0, 0, 0, 0.22) 86%, transparent 100%)',
-              }}
-            >
-              <div
-                className="relative w-full h-full overflow-hidden"
-                style={{
-                  WebkitMaskImage: 'linear-gradient(to top, transparent 0%, #000 26%)',
-                  maskImage: 'linear-gradient(to top, transparent 0%, #000 26%)',
-                }}
-              >
+            <div className="relative w-48 sm:w-56 aspect-square portrait-blend group">
+              <div className="relative w-full h-full overflow-hidden portrait-blend-inner">
                 {/* Blur-up placeholder background Data URI */}
                 <div
                   className="absolute inset-0 bg-cover bg-center filter blur-md scale-105"
@@ -81,12 +67,12 @@ export const ContactCard: React.FC = () => {
                   <source
                     srcSet={`${profileMeta.src800Avif} 800w, ${profileMeta.src400Avif} 400w`}
                     type="image/avif"
-                    sizes="(max-width: 640px) 256px, 288px"
+                    sizes="(max-width: 640px) 192px, 224px"
                   />
                   <source
                     srcSet={`${profileMeta.src800Webp} 800w, ${profileMeta.src400Webp} 400w`}
                     type="image/webp"
-                    sizes="(max-width: 640px) 256px, 288px"
+                    sizes="(max-width: 640px) 192px, 224px"
                   />
                   <img
                     src={profileMeta.src400Webp}

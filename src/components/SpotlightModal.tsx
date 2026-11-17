@@ -29,6 +29,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
 }) => {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const rowRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -234,6 +235,22 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
           item.category.toLowerCase().includes(query.toLowerCase())
       );
 
+  const categories: SpotlightItem['category'][] = ['Navigation', 'Blueprint', 'Action'];
+  const groupedItems = categories
+    .map((category) => ({
+      category,
+      label: category === 'Blueprint' ? 'Blueprints' : category === 'Action' ? 'Quick Actions' : 'Navigation',
+      items: filteredItems
+        .map((item, idx) => ({ item, idx }))
+        .filter(({ item }) => item.category === category),
+    }))
+    .filter((group) => group.items.length > 0);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    rowRefs.current[selectedIndex]?.scrollIntoView({ block: 'nearest' });
+  }, [selectedIndex, isOpen]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -274,12 +291,12 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       {...({ closedby: 'any' } as Record<string, unknown>)}
-      className="m-auto w-[92vw] max-w-xl rounded-3xl p-0 glass-sheet shadow-2xl focus:outline-none overflow-hidden text-[var(--text-primary)]"
+      className="my-auto sm:mt-[12vh] sm:mb-auto mx-auto w-[92vw] max-w-[620px] rounded-[22px] p-0 glass-sheet focus:outline-none overflow-hidden text-[var(--text-primary)]"
     >
-      <div className="flex flex-col max-h-[80vh] overflow-hidden">
-        {/* Search Input Bar */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--border-hairline)] bg-[var(--surface-card)]">
-          <Search className="w-5 h-5 text-[var(--accent-titanium)] shrink-0" />
+      <div className="flex flex-col max-h-[78vh] overflow-hidden">
+        {/* Search Input Bar — Apple Spotlight display proportions */}
+        <div className="flex items-center gap-3.5 px-6 py-4 sm:py-5 border-b border-[var(--border-hairline)]">
+          <Search className="w-[18px] h-[18px] text-[var(--text-tertiary)] shrink-0" strokeWidth={1.75} />
           <input
             ref={inputRef}
             type="text"
@@ -288,73 +305,105 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
               setQuery(e.target.value);
               setSelectedIndex(0);
             }}
-            placeholder="Search chapters, blueprints, or actions..."
-            className="w-full bg-transparent border-none text-sm font-medium text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none"
+            placeholder="Search sections, blueprints, or actions..."
+            className="w-full bg-transparent border-none text-base sm:text-[19px] font-normal tracking-[-0.02em] leading-snug text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none"
             aria-label="Spotlight search input"
           />
           {query && (
             <button
-              onClick={() => setQuery('')}
-              className="p-1 rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+              type="button"
+              onClick={() => {
+                setQuery('');
+                setSelectedIndex(0);
+                inputRef.current?.focus();
+              }}
+              aria-label="Clear search query"
+              className="p-1 rounded-full text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-card)] transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
           )}
-          <kbd className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono text-[var(--text-tertiary)] bg-[var(--surface-card-strong)] rounded border border-[var(--border-subtle)]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono tracking-wider text-[var(--text-tertiary)] hover:text-[var(--text-primary)] rounded-md border border-[var(--border-hairline)] transition-colors"
+            aria-label="Close Spotlight search"
+          >
             ESC
-          </kbd>
+          </button>
         </div>
 
-        {/* Results List */}
-        <div className="p-2 overflow-y-auto overscroll-contain space-y-1">
+        {/* Grouped Typographic Results */}
+        <div className="px-3 pb-3 pt-1 overflow-y-auto overscroll-contain">
           {filteredItems.length === 0 ? (
-            <div className="py-12 text-center text-xs text-[var(--text-secondary)] font-mono">
-              No matching commands or chapters found.
+            <div className="py-14 text-center text-sm tracking-[-0.01em] text-[var(--text-secondary)]">
+              No matching sections, blueprints, or actions.
             </div>
           ) : (
-            filteredItems.map((item, idx) => {
-              const isSelected = selectedIndex === idx;
-              return (
-                <button
-                  key={item.id}
-                  onClick={item.action}
-                  onMouseEnter={() => setSelectedIndex(idx)}
-                  className={`w-full text-left px-3.5 py-3 rounded-2xl flex items-center justify-between gap-3 transition-colors ${
-                    isSelected
-                      ? 'bg-[var(--surface-card-strong)] text-[var(--text-primary)] shadow-sm'
-                      : 'text-[var(--text-secondary)] hover:bg-[var(--surface-card)] hover:text-[var(--text-primary)]'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="p-2 rounded-xl bg-[var(--surface-card)] border border-[var(--border-hairline)] shrink-0">
-                      {item.icon}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-xs font-semibold text-[var(--text-primary)] truncate">
-                        {item.title}
-                      </div>
-                      <div className="text-[11px] text-[var(--text-secondary)] truncate">
-                        {item.subtitle}
-                      </div>
-                    </div>
-                  </div>
+            groupedItems.map((group) => (
+              <div key={group.category} className="mb-1 last:mb-0">
+                <div className="px-3 pt-3 pb-1 text-[10px] font-mono uppercase tracking-[0.14em] text-[var(--text-tertiary)] select-none">
+                  {group.label}
+                </div>
+                <div className="space-y-0.5">
+                  {group.items.map(({ item, idx }) => {
+                    const isSelected = selectedIndex === idx;
+                    return (
+                      <button
+                        key={item.id}
+                        ref={(el) => {
+                          rowRefs.current[idx] = el;
+                        }}
+                        onClick={item.action}
+                        onMouseEnter={() => setSelectedIndex(idx)}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl flex items-center justify-between gap-4 transition-colors ${
+                          isSelected
+                            ? 'bg-[var(--surface-card-strong)] text-[var(--text-primary)]'
+                            : 'text-[var(--text-secondary)] hover:bg-[var(--surface-card)] hover:text-[var(--text-primary)]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span
+                            className={`shrink-0 transition-opacity ${
+                              isSelected ? 'opacity-100' : 'opacity-70'
+                            }`}
+                          >
+                            {item.icon}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="text-[13.5px] sm:text-sm font-medium tracking-[-0.015em] text-[var(--text-primary)] truncate">
+                              {item.title}
+                            </div>
+                            <div className="text-xs tracking-[-0.005em] text-[var(--text-secondary)] truncate mt-0.5">
+                              {item.subtitle}
+                            </div>
+                          </div>
+                        </div>
 
-                  <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--text-tertiary)] shrink-0 px-2 py-0.5 rounded bg-[var(--surface-card)] border border-[var(--border-hairline)]">
-                    {item.category}
-                  </span>
-                </button>
-              );
-            })
+                        <span
+                          aria-hidden="true"
+                          className={`text-[11px] font-mono text-[var(--accent-titanium)] shrink-0 transition-opacity ${
+                            isSelected ? 'opacity-100' : 'opacity-0'
+                          }`}
+                        >
+                          ↵
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))
           )}
         </div>
 
-        {/* Footer shortcuts helper */}
-        <div className="px-5 py-2.5 border-t border-[var(--border-hairline)] flex items-center justify-between text-[11px] font-mono text-[var(--text-tertiary)] bg-[var(--surface-card)]">
-          <div className="flex items-center gap-3">
+        {/* Minimal Hairline Footer */}
+        <div className="px-6 py-2.5 border-t border-[var(--border-hairline)] flex items-center justify-between text-[10.5px] font-mono tracking-wide text-[var(--text-tertiary)]">
+          <div className="flex items-center gap-4">
             <span>↑↓ Navigate</span>
-            <span>↵ Select</span>
+            <span>↵ Open</span>
           </div>
-          <span>Wave Cantery Ambray Portfolio</span>
+          <span>{filteredItems.length} {filteredItems.length === 1 ? 'result' : 'results'}</span>
         </div>
       </div>
     </dialog>

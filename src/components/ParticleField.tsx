@@ -138,7 +138,7 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
       scrollY = currentScrollY;
 
       const selectors =
-        'main h1, main h2, main p, main dl, main .stack-marquee-viewport, main .career-table-container, article h1, article p, article dl, article section';
+        'main h1, main h2, main p, main dl, main .stack-marquee-viewport, main .career-table-container, article h1, article h2, article h3, article p, article dl';
       const nodes = document.querySelectorAll(selectors);
       nodes.forEach((el) => {
         if (docZones.length >= MAX_TEXT_ZONES) return;
@@ -187,18 +187,22 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
             { r: 5, g: 150, b: 105 },   // Emerald #059669
           ];
 
-      const coreAlpha = isDark ? 0.94 : 0.76;
-      const midAlpha = isDark ? 0.48 : 0.34;
-
       for (let s = 0; s < 3; s++) {
         const offCtx = sprites[s].getContext('2d');
         if (offCtx) {
           offCtx.clearRect(0, 0, 16, 16);
           const { r, g, b } = palette[s];
           const grad = offCtx.createRadialGradient(8, 8, 0, 8, 8, 8);
-          grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${coreAlpha})`);
-          grad.addColorStop(0.42, `rgba(${r}, ${g}, ${b}, ${midAlpha})`);
-          grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.0)`);
+          if (isDark) {
+            grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.94)`);
+            grad.addColorStop(0.42, `rgba(${r}, ${g}, ${b}, 0.48)`);
+            grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.0)`);
+          } else {
+            grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 1.0)`);
+            grad.addColorStop(0.25, `rgba(${r}, ${g}, ${b}, 0.85)`);
+            grad.addColorStop(0.55, `rgba(${r}, ${g}, ${b}, 0.48)`);
+            grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.0)`);
+          }
           offCtx.fillStyle = grad;
           offCtx.fillRect(0, 0, 16, 16);
         }
@@ -393,13 +397,14 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
           ? 0.9
           : 0.76 + 0.24 * Math.sin(nowSec * 1.2 + phase[i]);
 
-        const baseAlpha = (isDark ? (fid ? 0.34 : 0.21) : (fid ? 0.26 : 0.16)) * shimmer;
-        const interactionBoost = loupeFalloff * (isDark ? 0.42 : 0.32) + rippleGlow * 0.36;
-        const alpha = Math.min(0.68, (baseAlpha + interactionBoost) * clearance);
+        const baseAlpha = (isDark ? (fid ? 0.34 : 0.21) : (fid ? 0.48 : 0.32)) * shimmer;
+        const interactionBoost = loupeFalloff * (isDark ? 0.42 : 0.48) + rippleGlow * (isDark ? 0.36 : 0.46);
+        const alpha = Math.min(isDark ? 0.68 : 0.86, (baseAlpha + interactionBoost) * clearance);
 
         if (alpha < 0.015) continue;
 
-        const size = (fid ? 4.8 : 3.5) + loupeFalloff * 2.4 + rippleGlow * 1.8;
+        const baseSize = isDark ? (fid ? 4.8 : 3.5) : (fid ? 5.6 : 4.2);
+        const size = baseSize + loupeFalloff * 2.4 + rippleGlow * 1.8;
         const spriteIdx = loupeFalloff > 0.26 || rippleGlow > 0.22 ? 1 : nodeType[i];
         const sprite = sprites[spriteIdx] || sprites[0];
 
@@ -423,7 +428,7 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
           const sx = ptrX + Math.cos(angle) * satBaseRadius;
           const sy = ptrY + Math.sin(angle) * satBaseRadius;
           const satClearance = textClearance(sx, sy);
-          const satAlpha = 0.26 * loupeStrength * satClearance;
+          const satAlpha = (isDark ? 0.26 : 0.38) * loupeStrength * satClearance;
           if (satAlpha > 0.02) {
             ctx.globalAlpha = satAlpha;
             ctx.drawImage(satSprite, Math.round(sx - 2), Math.round(sy - 2), 4, 4);
@@ -446,7 +451,7 @@ export const ParticleField: React.FC<ParticleFieldProps> = ({ theme, isModalOpen
 
             const progress = age / life;
             const moteClear = textClearance(moteX[i], moteY[i]);
-            const alpha = (1 - progress) * (1 - progress) * 0.52 * moteClear;
+            const alpha = (1 - progress) * (1 - progress) * (isDark ? 0.52 : 0.66) * moteClear;
             if (alpha > 0.015) {
               const size = moteSize[i] * (0.65 + 0.35 * (1 - progress));
               const sprite = sprites[moteType[i]] || sprites[1];

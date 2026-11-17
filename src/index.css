@@ -4,7 +4,7 @@
   color-scheme: dark;
   --bg-primary: #050507;
   --bg-elevated: rgba(16, 18, 23, 0.88);
-  --bg-sheet: rgba(12, 14, 18, 0.96);
+  --bg-sheet: rgba(14, 16, 20, 0.80);
   --surface-card: rgba(255, 255, 255, 0.055);
   --surface-card-strong: rgba(255, 255, 255, 0.095);
   --border-hairline: rgba(255, 255, 255, 0.09);
@@ -18,13 +18,14 @@
   --scrim-radial: radial-gradient(ellipse 72% 58% at 50% 48%, rgba(5, 5, 7, 0.86) 0%, rgba(5, 5, 7, 0.52) 58%, transparent 100%);
   --glass-blur: blur(24px) saturate(180%);
   --glass-sheet-blur: blur(28px) saturate(180%);
+  --sheet-shadow: 0 32px 80px -16px rgba(0, 0, 0, 0.65), 0 0 0 0.5px rgba(255, 255, 255, 0.08) inset;
 }
 
 html[data-theme="light"] {
   color-scheme: light;
   --bg-primary: #F5F5F7;
   --bg-elevated: rgba(255, 255, 255, 0.90);
-  --bg-sheet: rgba(252, 252, 254, 0.97);
+  --bg-sheet: rgba(255, 255, 255, 0.84);
   --surface-card: rgba(0, 0, 0, 0.038);
   --surface-card-strong: rgba(0, 0, 0, 0.07);
   --border-hairline: rgba(0, 0, 0, 0.09);
@@ -38,6 +39,7 @@ html[data-theme="light"] {
   --scrim-radial: radial-gradient(ellipse 72% 58% at 50% 48%, rgba(245, 245, 247, 0.90) 0%, rgba(245, 245, 247, 0.58) 58%, transparent 100%);
   --glass-blur: blur(24px) saturate(180%);
   --glass-sheet-blur: blur(28px) saturate(180%);
+  --sheet-shadow: 0 28px 70px -16px rgba(0, 0, 0, 0.16), 0 0 0 0.5px rgba(255, 255, 255, 0.72) inset;
 }
 
 html[data-theme="dark"] {
@@ -93,13 +95,13 @@ dialog:modal {
 dialog::backdrop {
   overflow: hidden;
   overscroll-behavior: contain;
-  background: rgba(3, 4, 8, 0.78);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(5, 5, 7, 0.56);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 html[data-theme="light"] dialog::backdrop {
-  background: rgba(15, 17, 22, 0.48);
+  background: rgba(245, 245, 247, 0.46);
 }
 
 /* Apple Frosted Glass Utilities */
@@ -116,6 +118,7 @@ dialog.glass-sheet,
   backdrop-filter: var(--glass-sheet-blur);
   -webkit-backdrop-filter: var(--glass-sheet-blur);
   border: 1px solid var(--border-subtle);
+  box-shadow: var(--sheet-shadow);
 }
 
 /* Container query responsive table container */
@@ -195,4 +198,40 @@ dialog.glass-sheet,
   .stack-marquee-dup {
     display: none;
   }
+}
+
+/* Portrait blending — seamless radial fade in Dark Mode, borderless soft circle in Light Mode */
+.portrait-blend {
+  -webkit-mask-image: radial-gradient(
+    closest-side at 50% 45%,
+    #000 58%,
+    rgba(0, 0, 0, 0.82) 74%,
+    rgba(0, 0, 0, 0.28) 90%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    closest-side at 50% 45%,
+    #000 58%,
+    rgba(0, 0, 0, 0.82) 74%,
+    rgba(0, 0, 0, 0.28) 90%,
+    transparent 100%
+  );
+}
+
+.portrait-blend-inner {
+  -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 22%);
+  mask-image: linear-gradient(to top, transparent 0%, #000 22%);
+}
+
+html[data-theme="light"] .portrait-blend {
+  border-radius: 9999px;
+  -webkit-mask-image: radial-gradient(closest-side at 50% 50%, #000 94%, transparent 100%);
+  mask-image: radial-gradient(closest-side at 50% 50%, #000 94%, transparent 100%);
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.1));
+}
+
+html[data-theme="light"] .portrait-blend-inner {
+  border-radius: 9999px;
+  -webkit-mask-image: none;
+  mask-image: none;
 }
