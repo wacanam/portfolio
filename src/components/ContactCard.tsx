@@ -11,17 +11,12 @@ import {
   MapPin,
   Globe,
   Clock,
-  Eye,
 } from 'lucide-react';
 import { contactData } from '../data/portfolio';
 import { profileMeta } from '../generated/assetMeta';
 import { getTimezoneSnapshot, TimezoneSnapshot } from '../utils/timezone';
 
-interface ContactCardProps {
-  onPreviewResume?: () => void;
-}
-
-export const ContactCard: React.FC<ContactCardProps> = ({ onPreviewResume }) => {
+export const ContactCard: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [tzSnapshot, setTzSnapshot] = useState<TimezoneSnapshot>(() => getTimezoneSnapshot());
 
@@ -209,7 +204,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({ onPreviewResume }) => 
             </div>
 
             {/* Profiles & Resume */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <a
                 href={contactData.githubUrl}
                 target="_blank"
@@ -229,15 +224,6 @@ export const ContactCard: React.FC<ContactCardProps> = ({ onPreviewResume }) => 
                 <Linkedin className="w-4 h-4 text-[var(--accent-titanium)]" />
                 <span>LinkedIn</span>
               </a>
-
-              <button
-                type="button"
-                onClick={onPreviewResume}
-                className="p-3 rounded-2xl glass-dock border border-[var(--border-hairline)] hover:border-[var(--border-subtle)] flex items-center justify-center gap-2 text-xs font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-              >
-                <Eye className="w-4 h-4 text-[var(--accent-titanium)]" />
-                <span>Preview</span>
-              </button>
 
               <a
                 href={contactData.resumeUrl}

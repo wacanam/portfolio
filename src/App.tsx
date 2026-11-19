@@ -7,7 +7,6 @@ import { ArchitectureSheet } from './components/ArchitectureSheet';
 import { ExperienceSpec } from './components/ExperienceSpec';
 import { ContactCard } from './components/ContactCard';
 import { SpotlightModal } from './components/SpotlightModal';
-import { ResumePreviewModal } from './components/ResumePreviewModal';
 import { flagshipSystems, skillCategories } from './data/portfolio';
 import { FlagshipSystem } from './types';
 import { resolveCanonicalSkill } from './utils/skillMatch';
@@ -47,14 +46,11 @@ export const App: React.FC = () => {
   );
   const [highlightedCareerId, setHighlightedCareerId] = useState<string | null>(null);
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
-  const [isResumeOpen, setIsResumeOpen] = useState(false);
 
   const savedScrollYRef = useRef(0);
   const careerHighlightTimerRef = useRef<number | null>(null);
   const activeSystemRef = useRef<FlagshipSystem | null>(architectureSystem);
   activeSystemRef.current = architectureSystem;
-
-  const isModalOpen = isSpotlightOpen || isResumeOpen;
 
   // Synchronize data-theme on <html> element
   useEffect(() => {
@@ -87,7 +83,6 @@ export const App: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setIsResumeOpen(false);
         setIsSpotlightOpen((prev) => !prev);
       }
     };
@@ -194,7 +189,7 @@ export const App: React.FC = () => {
   return (
     <div className="relative min-h-screen selection:bg-[var(--accent-titanium)]/20 selection:text-[var(--accent-titanium)]">
       {/* Subtly animated ordered pattern grid with cursor repulsion & ripple physics across all views */}
-      <ParticleField theme={theme} isModalOpen={isModalOpen} />
+      <ParticleField theme={theme} isModalOpen={isSpotlightOpen} />
 
       {architectureSystem ? (
         <ArchitectureSheet
@@ -217,7 +212,6 @@ export const App: React.FC = () => {
             <Hero
               selectedSkill={selectedSkill}
               onSelectSkill={handleSelectSkillAndScroll}
-              onPreviewResume={() => setIsResumeOpen(true)}
             />
 
             <SystemSection
@@ -232,7 +226,7 @@ export const App: React.FC = () => {
               highlightedCareerId={highlightedCareerId}
             />
 
-            <ContactCard onPreviewResume={() => setIsResumeOpen(true)} />
+            <ContactCard />
           </main>
 
           {/* Footer */}
@@ -253,16 +247,9 @@ export const App: React.FC = () => {
         onSelectSystemNode={handleOpenSystem}
         onSelectSkill={handleSelectSkillAndScroll}
         onSelectCareer={handleSelectCareer}
-        onOpenResumePreview={() => setIsResumeOpen(true)}
         selectedSkill={selectedSkill}
         theme={theme}
         onToggleTheme={toggleTheme}
-      />
-
-      {/* In-App Résumé Preview Modal */}
-      <ResumePreviewModal
-        isOpen={isResumeOpen}
-        onClose={() => setIsResumeOpen(false)}
       />
     </div>
   );

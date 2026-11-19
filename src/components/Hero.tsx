@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, ArrowRight, Github, Linkedin, Mail, MessageSquare, Eye } from 'lucide-react';
+import { Download, ArrowRight, Github, Linkedin, Mail, MessageSquare } from 'lucide-react';
 import { contactData, skillCategories } from '../data/portfolio';
 import { skillsMatch } from '../utils/skillMatch';
 
@@ -10,13 +10,11 @@ const heroMarqueeSkills = (
 interface HeroProps {
   selectedSkill?: string | null;
   onSelectSkill?: (skill: string) => void;
-  onPreviewResume?: () => void;
 }
 
 export const Hero: React.FC<HeroProps> = ({
   selectedSkill = null,
   onSelectSkill,
-  onPreviewResume,
 }) => {
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
@@ -86,7 +84,7 @@ export const Hero: React.FC<HeroProps> = ({
         </dl>
 
         {/* Primary CTAs */}
-        <div className="flex flex-col sm:flex-row items-center gap-3.5 mb-9">
+        <div className="flex flex-col sm:flex-row items-center gap-4 mb-9">
           <button
             onClick={() => scrollTo('systems')}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] font-medium text-sm tracking-wide transition-all hover:opacity-90 active:scale-[0.98] shadow-lg"
@@ -103,18 +101,6 @@ export const Hero: React.FC<HeroProps> = ({
             <Download className="w-4 h-4 text-[var(--accent-titanium)]" />
             <span>Download Résumé</span>
           </a>
-
-          {onPreviewResume && (
-            <button
-              type="button"
-              onClick={onPreviewResume}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-full glass-dock text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-medium text-sm tracking-wide transition-all hover:bg-[var(--border-subtle)] active:scale-[0.98] border border-[var(--border-hairline)]"
-              aria-label="Preview verified résumé in-app"
-            >
-              <Eye className="w-4 h-4 text-[var(--accent-titanium)]" />
-              <span>Preview</span>
-            </button>
-          )}
         </div>
 
         {/* Quiet Social Links */}

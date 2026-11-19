@@ -13,7 +13,6 @@ import {
   Layers,
   Cpu,
   Briefcase,
-  Eye,
   Link2,
   GitBranch,
 } from 'lucide-react';
@@ -33,7 +32,6 @@ interface SpotlightModalProps {
   onSelectSystemNode?: (system: FlagshipSystem, nodeIdx: number) => void;
   onSelectSkill?: (skill: string) => void;
   onSelectCareer?: (careerId: string) => void;
-  onOpenResumePreview?: () => void;
   selectedSkill?: string | null;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
@@ -82,7 +80,6 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
   onSelectSystemNode,
   onSelectSkill,
   onSelectCareer,
-  onOpenResumePreview,
   selectedSkill = null,
   theme,
   onToggleTheme,
@@ -209,7 +206,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
       id: 'nav-contact',
       category: 'Navigation',
       title: 'Executive Coordinates & Contact',
-      subtitle: 'Live PHT overlap, email copy, WhatsApp, Viber, résumé preview',
+      subtitle: 'Live PHT overlap, email copy, WhatsApp, Viber, résumé download',
       icon: <ArrowRight className="w-4 h-4 text-[var(--accent-titanium)]" />,
       action: () => scrollTo('contact'),
     },
@@ -253,22 +250,6 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
     },
 
     // Quick Actions
-    ...(onOpenResumePreview
-      ? [
-          {
-            id: 'act-preview-resume',
-            category: 'Action' as const,
-            title: 'Preview Verified Résumé (In-App)',
-            subtitle: 'Interactive 2-page specification & embedded PDF viewer',
-            keywords: 'cv curriculum vitae resume preview pdf',
-            icon: <Eye className="w-4 h-4 text-[var(--accent-titanium)]" />,
-            action: () => {
-              onClose();
-              setTimeout(() => onOpenResumePreview(), 80);
-            },
-          },
-        ]
-      : []),
     ...(selectedSkill
       ? [
           {

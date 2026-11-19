@@ -940,7 +940,7 @@ async function main() {
     assert.ok(canvasCode.includes('ripple') && canvasCode.includes('envelope'), 'Pointer click ripple wave physics missing');
   });
 
-  suite('Tier 1 & 3: Portfolio Upgrades — Deep Spotlight, URL Skill Sync & Live Timezone / Resume Preview');
+  suite('Tier 1 & 3: Portfolio Upgrades — Deep Spotlight, URL Skill Sync & Live Timezone Overlap');
 
   await runTest('T1-UPG-01', 'Zero-dependency skillMatch.ts and timezone.ts utilities exported in src/utils/', 1, 'Upgrades', async () => {
     const skillMatchFile = path.join(srcDir, 'utils', 'skillMatch.ts');
@@ -963,25 +963,14 @@ async function main() {
     assert.ok(spotlightCode.includes('skillCategories'), 'SpotlightModal does not index skillCategories');
     assert.ok(spotlightCode.includes('careerTimeline'), 'SpotlightModal does not index careerTimeline');
     assert.ok(spotlightCode.includes('system.nodes'), 'SpotlightModal does not index system nodes');
-    assert.ok(spotlightCode.includes('onOpenResumePreview'), 'SpotlightModal missing in-app resume preview action');
-  });
-
-  await runTest('T1-UPG-04', 'ResumePreviewModal native <dialog> dual-mode spec & PDF preview component', 1, 'Upgrades', async () => {
-    const resumeModalFile = path.join(srcDir, 'components', 'ResumePreviewModal.tsx');
-    assert.ok(existsSync(resumeModalFile), 'src/components/ResumePreviewModal.tsx missing');
-    const code = await safeReadFile(resumeModalFile);
-    assert.ok(code.includes('<dialog') && code.includes('showModal()'), 'Native <dialog> showModal() missing in ResumePreviewModal');
-    assert.ok(code.includes('getBoundingClientRect') && code.includes('onCancel={onClose}'), 'Light-dismiss or Escape cancel missing in ResumePreviewModal');
-    assert.ok(code.includes('Interactive 2-Page') && code.includes('Original PDF'), 'Dual Interactive / PDF mode switcher missing');
   });
 
   await runTest('T3-UPG-05', 'URL ?skill= synchronization & cross-highlighting across App, Hero, SystemSection, and ExperienceSpec', 3, 'Upgrades', async () => {
     const appCode = await safeReadFile(path.join(srcDir, 'App.tsx'));
     assert.ok(appCode.includes('URLSearchParams') && appCode.includes("get('skill')"), 'App.tsx missing URL ?skill= hydration');
-    assert.ok(appCode.includes('ResumePreviewModal') && appCode.includes('isModalOpen = isSpotlightOpen || isResumeOpen'), 'App.tsx must unify modal wake pause across Spotlight and Resume modals');
 
     const heroCode = await safeReadFile(path.join(srcDir, 'components', 'Hero.tsx'));
-    assert.ok(heroCode.includes('onSelectSkill') && heroCode.includes('onPreviewResume'), 'Hero.tsx missing clickable marquee or resume preview trigger');
+    assert.ok(heroCode.includes('onSelectSkill'), 'Hero.tsx missing clickable marquee handler');
 
     const sysCode = await safeReadFile(path.join(srcDir, 'components', 'SystemSection.tsx'));
     assert.ok(sysCode.includes('systemMatchesSkill') && sysCode.includes('Matches ·'), 'SystemSection.tsx missing skill cross-highlight badge');
@@ -990,10 +979,9 @@ async function main() {
     assert.ok(expCode.includes('buildSkillShareUrl') && expCode.includes('Copy Filter Link'), 'ExperienceSpec.tsx missing shareable skill URL copy control');
   });
 
-  await runTest('T3-UPG-06', 'ContactCard live PHT timezone overlap telemetry and in-app résumé preview trigger', 3, 'Upgrades', async () => {
+  await runTest('T3-UPG-06', 'ContactCard live PHT timezone overlap telemetry', 3, 'Upgrades', async () => {
     const contactCode = await safeReadFile(path.join(srcDir, 'components', 'ContactCard.tsx'));
     assert.ok(contactCode.includes('getTimezoneSnapshot') && contactCode.includes('PHT'), 'ContactCard missing live PHT clock & overlap snapshot');
-    assert.ok(contactCode.includes('onPreviewResume') && contactCode.includes('Preview'), 'ContactCard missing in-app résumé preview trigger');
   });
 
   // ----------------------------------------------------------------------------
