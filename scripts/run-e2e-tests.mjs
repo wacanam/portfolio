@@ -940,7 +940,7 @@ async function main() {
     assert.ok(canvasCode.includes('ripple') && canvasCode.includes('envelope'), 'Pointer click ripple wave physics missing');
   });
 
-  suite('Tier 1 & 3: Top 3 Upgrades — Deep Spotlight, SVG Topology Trace & Live Timezone / Resume Preview');
+  suite('Tier 1 & 3: Portfolio Upgrades — Deep Spotlight, URL Skill Sync & Live Timezone / Resume Preview');
 
   await runTest('T1-UPG-01', 'Zero-dependency skillMatch.ts and timezone.ts utilities exported in src/utils/', 1, 'Upgrades', async () => {
     const skillMatchFile = path.join(srcDir, 'utils', 'skillMatch.ts');
@@ -964,21 +964,6 @@ async function main() {
     assert.ok(spotlightCode.includes('careerTimeline'), 'SpotlightModal does not index careerTimeline');
     assert.ok(spotlightCode.includes('system.nodes'), 'SpotlightModal does not index system nodes');
     assert.ok(spotlightCode.includes('onOpenResumePreview'), 'SpotlightModal missing in-app resume preview action');
-  });
-
-  await runTest('T1-UPG-03', 'SystemTopologySvg hairline schematic & interactive traceScenarios simulator in ArchitectureSheet', 1, 'Upgrades', async () => {
-    const topoFile = path.join(srcDir, 'components', 'SystemTopologySvg.tsx');
-    assert.ok(existsSync(topoFile), 'src/components/SystemTopologySvg.tsx missing');
-    const topoCode = await safeReadFile(topoFile);
-    assert.ok(topoCode.includes('<svg') && topoCode.includes('activeScenario'), 'SVG topology schematic missing');
-
-    const sheetCode = await safeReadFile(path.join(srcDir, 'components', 'ArchitectureSheet.tsx'));
-    assert.ok(sheetCode.includes('SystemTopologySvg'), 'ArchitectureSheet does not render SystemTopologySvg');
-    assert.ok(sheetCode.includes('traceScenarios') && sheetCode.includes('Simulate Trace'), 'Interactive trace simulator controls missing');
-
-    const dataCode = await safeReadFile(path.join(srcDir, 'data', 'portfolio.ts'));
-    const scenarioMatches = [...dataCode.matchAll(/traceScenarios:\s*\[/g)];
-    assert.strictEqual(scenarioMatches.length, 3, `Expected traceScenarios on all 3 flagship systems, found ${scenarioMatches.length}`);
   });
 
   await runTest('T1-UPG-04', 'ResumePreviewModal native <dialog> dual-mode spec & PDF preview component', 1, 'Upgrades', async () => {
