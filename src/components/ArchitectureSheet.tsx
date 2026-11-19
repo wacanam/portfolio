@@ -1,27 +1,51 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Shield, Layers, Cpu, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Shield,
+  Layers,
+  Cpu,
+  CheckCircle2,
+  Play,
+  Pause,
+  RotateCcw,
+  StepForward,
+  Share2,
+  Check,
+  Activity,
+} from 'lucide-react';
 import { flagshipSystems } from '../data/portfolio';
 import { FlagshipSystem } from '../types';
+import { SystemTopologySvg } from './SystemTopologySvg';
 
 interface ArchitectureSheetProps {
   system: FlagshipSystem | null;
+  initialNodeIdx?: number;
   onSelectSystem?: (system: FlagshipSystem) => void;
   onClose: () => void;
 }
 
 export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({
   system,
+  initialNodeIdx = 0,
   onSelectSystem,
   onClose,
 }) => {
-  const [activeNodeIdx, setActiveNodeIdx] = useState(0);
+  const [activeNodeIdx, setActiveNodeIdx] = useState(initialNodeIdx);
+  const [scenarioIdx, setScenarioIdx] = useState<0 | 1>(0);
+  const [activeHopIdx, setActiveHopIdx] = useState<number | null>(null);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Reset pipeline selection and scroll cleanly to top when switching systems
   useEffect(() => {
     if (!system) return;
-    setActiveNodeIdx(0);
+    setActiveNodeIdx(initialNodeIdx);
+    setScenarioIdx(0);
+    setActiveHopIdx(null);
+    setIsSimulating(false);
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-  }, [system?.id]);
+  }, [system?.id, initialNodeIdx]);
 
   // Allow Escape key to return to portfolio overview cleanly
   useEffect(() => {
@@ -36,13 +60,114 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [system, onClose]);
 
-  if (!system) {
+  const activeScenario = system?.traceScenarios[scenarioIdx] ?? system?.traceScenarios[0];
+
+  // Auto-step trace simulator
+  useEffect(() => {
+    if (!isSimulating || !activeScenario) return;
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const stepDelay = prefersReduced ? 600 : 1100;
+
+    const timer = window.setInterval(() => {
+      setActiveHopIdx((prev) => {
+        const current = prev === null ? -1 : prev;
+        const next = current + 1;
+        if (next >= activeScenario.hops.length) {
+          setIsSimulating(false);
+          return prev;
+        }
+        const hop = activeScenario.hops[next];
+        if (hop) {
+          setActiveNodeIdx(hop.nodeIndex);
+        }
+        if (next === activeScenario.hops.length - 1) {
+          setIsSimulating(false);
+        }
+        return next;
+      });
+    }, stepDelay);
+
+    return () => window.clearInterval(timer);
+  }, [isSimulating, activeScenario]);
+
+  const handleSelectScenario = useCallback(
+    (idx: 0 | 1) => {
+      setScenarioIdx(idx);
+      setIsSimulating(false);
+      setActiveHopIdx(null);
+      if (system) {
+        const firstHop = system.traceScenarios[idx].hops[0];
+        if (firstHop) {
+          setActiveNodeIdx(firstHop.nodeIndex);
+        }
+      }
+    },
+    [system]
+  );
+
+  const handleToggleSimulate = useCallback(() => {
+    if (!activeScenario) return;
+    if (isSimulating) {
+      setIsSimulating(false);
+      return;
+    }
+    const firstHop = activeScenario.hops[0];
+    setActiveHopIdx(0);
+    if (firstHop) {
+      setActiveNodeIdx(firstHop.nodeIndex);
+    }
+    setIsSimulating(true);
+  }, [activeScenario, isSimulating]);
+
+  const handleStepHop = useCallback(() => {
+    if (!activeScenario) return;
+    setIsSimulating(false);
+    setActiveHopIdx((prev) => {
+      const next = prev === null ? 0 : (prev + 1) % activeScenario.hops.length;
+      const hop = activeScenario.hops[next];
+      if (hop) {
+        setActiveNodeIdx(hop.nodeIndex);
+      }
+      return next;
+    });
+  }, [activeScenario]);
+
+  const handleResetTrace = useCallback(() => {
+    setIsSimulating(false);
+    setActiveHopIdx(null);
+    setActiveNodeIdx(0);
+  }, []);
+
+  const handleCopyBlueprintLink = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    const shareUrl = window.location.href;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      const input = document.createElement('input');
+      input.value = shareUrl;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+    }
+    setCopiedLink(true);
+    window.setTimeout(() => setCopiedLink(false), 2200);
+  }, []);
+
+  if (!system || !activeScenario) {
     return null;
   }
 
   const activeNode = system.nodes[activeNodeIdx] ?? system.nodes[0];
   const currentIdx = flagshipSystems.findIndex((s) => s.id === system.id);
   const nextSystem = flagshipSystems[(currentIdx + 1) % flagshipSystems.length];
+  const matchedHop =
+    activeScenario.hops.find((h) => h.nodeIndex === activeNodeIdx) ?? null;
+  const activeTraceHop =
+    activeHopIdx !== null ? activeScenario.hops[activeHopIdx] ?? null : null;
 
   return (
     <div className="relative z-10 min-h-screen w-full pb-28 select-none">
@@ -78,6 +203,24 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({
                 })}
               </nav>
             )}
+            <button
+              type="button"
+              onClick={handleCopyBlueprintLink}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--surface-card)] hover:bg-[var(--surface-card-strong)] border border-[var(--border-hairline)] text-[11px] font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              aria-label="Copy shareable blueprint link"
+            >
+              {copiedLink ? (
+                <>
+                  <Check className="w-3 h-3 text-[var(--accent-signal)]" />
+                  <span className="text-[var(--accent-signal)]">Copied</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-3 h-3 text-[var(--accent-titanium)]" />
+                  <span className="hidden sm:inline">Share</span>
+                </>
+              )}
+            </button>
             <kbd className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono text-[var(--text-tertiary)] bg-[var(--surface-card)] rounded border border-[var(--border-hairline)]">
               ESC
             </kbd>
@@ -124,20 +267,106 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({
           ))}
         </dl>
 
-        {/* 5-Node Interactive Architecture Pipeline */}
+        {/* 5-Node Interactive Architecture Pipeline & Request/Queue Trace */}
         <section
           className="py-4 mb-14"
           aria-label="5-Node Distributed Architecture Pipeline"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 pb-3 border-b border-[var(--border-hairline)]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5 pb-3 border-b border-[var(--border-hairline)]">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-[var(--accent-titanium)] font-semibold">
               <Layers className="w-4 h-4" />
-              <span>5-Node System Flow</span>
+              <span>5-Node System Topology &amp; Request Trace</span>
             </div>
             <span className="text-[11px] font-mono text-[var(--text-tertiary)]">
-              Select a stage to inspect responsibilities
+              Select a stage or run a live trace scenario
             </span>
           </div>
+
+          {/* Trace Simulation Bar */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-5 p-3.5 rounded-2xl border border-[var(--border-hairline)] bg-[var(--surface-card)]/40">
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Trace scenario selector">
+              {system.traceScenarios.map((scenario, idx) => {
+                const isSelectedScenario = scenarioIdx === idx;
+                return (
+                  <button
+                    key={scenario.id}
+                    type="button"
+                    onClick={() => handleSelectScenario(idx as 0 | 1)}
+                    className={`px-3 py-1.5 rounded-full text-[11px] font-mono transition-all border ${
+                      isSelectedScenario
+                        ? 'bg-[var(--surface-card-strong)] text-[var(--accent-titanium)] border-[var(--accent-titanium)] font-semibold'
+                        : 'bg-transparent text-[var(--text-secondary)] border-[var(--border-hairline)] hover:text-[var(--text-primary)] hover:border-[var(--border-subtle)]'
+                    }`}
+                  >
+                    {scenario.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleToggleSimulate}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[var(--text-primary)] text-[var(--bg-primary)] text-[11px] font-mono font-semibold hover:opacity-90 active:scale-[0.98] transition-all"
+              >
+                {isSimulating ? (
+                  <>
+                    <Pause className="w-3 h-3" />
+                    <span>Pause Trace</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3 h-3" />
+                    <span>Simulate Trace</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleStepHop}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-dock text-[11px] font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                title="Advance one hop"
+              >
+                <StepForward className="w-3 h-3 text-[var(--accent-titanium)]" />
+                <span>Step</span>
+              </button>
+
+              {activeHopIdx !== null && (
+                <button
+                  type="button"
+                  onClick={handleResetTrace}
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-[11px] font-mono text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                  aria-label="Reset trace simulation"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Reset</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          <p className="text-xs text-[var(--text-secondary)] mb-4 px-1 leading-relaxed">
+            <span className="font-mono uppercase text-[var(--accent-titanium)] mr-2">
+              {activeScenario.flowSummary}:
+            </span>
+            {activeScenario.summary}
+          </p>
+
+          {/* Hairline SVG Architecture Schematic */}
+          <SystemTopologySvg
+            nodes={system.nodes}
+            activeNodeIdx={activeNodeIdx}
+            onSelectNode={(idx) => {
+              setIsSimulating(false);
+              const hopMatchIdx = activeScenario.hops.findIndex((h) => h.nodeIndex === idx);
+              setActiveHopIdx(hopMatchIdx >= 0 ? hopMatchIdx : null);
+              setActiveNodeIdx(idx);
+            }}
+            activeScenario={activeScenario}
+            activeHopIdx={activeHopIdx}
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-2.5 mb-8">
             {system.nodes.map((node, idx) => {
@@ -145,7 +374,12 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({
               return (
                 <button
                   key={node.id}
-                  onClick={() => setActiveNodeIdx(idx)}
+                  onClick={() => {
+                    setIsSimulating(false);
+                    const hopMatchIdx = activeScenario.hops.findIndex((h) => h.nodeIndex === idx);
+                    setActiveHopIdx(hopMatchIdx >= 0 ? hopMatchIdx : null);
+                    setActiveNodeIdx(idx);
+                  }}
                   className={`text-left p-3.5 rounded-2xl transition-all border ${
                     isSelected
                       ? 'bg-[var(--accent-titanium)] text-[var(--bg-primary)] font-semibold border-[var(--accent-titanium)] shadow-sm'
@@ -185,7 +419,35 @@ export const ArchitectureSheet: React.FC<ArchitectureSheetProps> = ({
                   <span className="text-[var(--accent-titanium)]">{activeNode.guarantee}</span>
                 </div>
               </div>
-              <p className="leading-relaxed mb-2 text-xs sm:text-sm">{activeNode.details}</p>
+              <p className="leading-relaxed mb-3 text-xs sm:text-sm">{activeNode.details}</p>
+
+              {/* Trace Hop Telemetry Strip */}
+              <div className="mb-3 p-3 rounded-xl bg-[var(--surface-card)] border border-[var(--border-hairline)] text-xs">
+                {matchedHop ? (
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px]">
+                      <span className="inline-flex items-center gap-1.5 text-[var(--accent-signal)] font-semibold">
+                        <Activity className="w-3.5 h-3.5" />
+                        <span>
+                          {activeTraceHop?.nodeIndex === activeNodeIdx ? 'ACTIVE HOP · ' : ''}
+                          {matchedHop.protocol}
+                        </span>
+                      </span>
+                      <span className="text-[var(--accent-titanium)] uppercase">
+                        Stage: {matchedHop.latencyLabel}
+                      </span>
+                    </div>
+                    <p className="text-[var(--text-secondary)] leading-relaxed">
+                      {matchedHop.action}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="font-mono text-[11px] text-[var(--text-tertiary)]">
+                    Bypassed in &ldquo;{activeScenario.label}&rdquo; — request resolves upstream without reaching this stage.
+                  </div>
+                )}
+              </div>
+
               <div className="text-[11px] font-mono text-[var(--text-tertiary)] uppercase">
                 Role: {activeNode.role}
               </div>

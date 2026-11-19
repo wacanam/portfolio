@@ -1,10 +1,44 @@
-import React, { useState } from 'react';
-import { Mail, Copy, Check, MessageSquare, Phone, Download, Github, Linkedin, MapPin, Globe } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Mail,
+  Copy,
+  Check,
+  MessageSquare,
+  Phone,
+  Download,
+  Github,
+  Linkedin,
+  MapPin,
+  Globe,
+  Clock,
+  Eye,
+} from 'lucide-react';
 import { contactData } from '../data/portfolio';
 import { profileMeta } from '../generated/assetMeta';
+import { getTimezoneSnapshot, TimezoneSnapshot } from '../utils/timezone';
 
-export const ContactCard: React.FC = () => {
+interface ContactCardProps {
+  onPreviewResume?: () => void;
+}
+
+export const ContactCard: React.FC<ContactCardProps> = ({ onPreviewResume }) => {
   const [copied, setCopied] = useState(false);
+  const [tzSnapshot, setTzSnapshot] = useState<TimezoneSnapshot>(() => getTimezoneSnapshot());
+
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState !== 'hidden') {
+        setTzSnapshot(getTimezoneSnapshot());
+      }
+    };
+
+    const timer = window.setInterval(refresh, 30_000);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, []);
 
   const handleCopyEmail = async () => {
     try {
@@ -175,7 +209,7 @@ export const ContactCard: React.FC = () => {
             </div>
 
             {/* Profiles & Resume */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <a
                 href={contactData.githubUrl}
                 target="_blank"
@@ -196,6 +230,15 @@ export const ContactCard: React.FC = () => {
                 <span>LinkedIn</span>
               </a>
 
+              <button
+                type="button"
+                onClick={onPreviewResume}
+                className="p-3 rounded-2xl glass-dock border border-[var(--border-hairline)] hover:border-[var(--border-subtle)] flex items-center justify-center gap-2 text-xs font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                <Eye className="w-4 h-4 text-[var(--accent-titanium)]" />
+                <span>Preview</span>
+              </button>
+
               <a
                 href={contactData.resumeUrl}
                 download="Wave_Ambray_Resume.pdf"
@@ -206,15 +249,29 @@ export const ContactCard: React.FC = () => {
               </a>
             </div>
 
-            {/* Geographic Coordinates & Availability */}
-            <div className="p-4 rounded-2xl bg-[var(--border-hairline)] border border-[var(--border-hairline)] flex flex-col gap-1.5 text-xs text-[var(--text-secondary)]">
+            {/* Geographic Coordinates, Live PHT Clock & Visitor Overlap */}
+            <div className="p-4 rounded-2xl bg-[var(--border-hairline)] border border-[var(--border-hairline)] flex flex-col gap-2 text-xs text-[var(--text-secondary)]">
               <div className="flex items-center gap-2 text-[var(--accent-titanium)] font-mono font-medium">
                 <MapPin className="w-3.5 h-3.5 shrink-0" />
                 <span>{contactData.location}</span>
               </div>
-              <div className="flex items-center gap-2 text-[var(--accent-signal)] font-mono text-[11px]">
-                <Globe className="w-3.5 h-3.5 shrink-0" />
-                <span>{contactData.availability}</span>
+
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] text-[var(--text-primary)]">
+                <Clock className="w-3.5 h-3.5 shrink-0 text-[var(--accent-signal)]" />
+                <span className="inline-flex items-center gap-1.5 font-mono-numbers font-semibold">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent-signal)]" aria-hidden="true" />
+                  {tzSnapshot.manilaTime24} PHT
+                </span>
+                <span className="text-[var(--border-subtle)]" aria-hidden="true">·</span>
+                <span className="text-[var(--text-secondary)]">{tzSnapshot.offsetDeltaLabel}</span>
+              </div>
+
+              <div className="flex items-start gap-2 text-[var(--accent-signal)] font-mono text-[11px] pt-1 border-t border-[var(--border-hairline)]">
+                <Globe className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <div className="flex flex-col gap-0.5">
+                  <span>{contactData.availability}</span>
+                  <span className="text-[var(--text-secondary)]">{tzSnapshot.overlapSummary}</span>
+                </div>
               </div>
             </div>
           </div>

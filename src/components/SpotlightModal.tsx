@@ -1,29 +1,89 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, ArrowRight, Copy, Check, MessageSquare, Phone, Download, Sun, Moon, Layers } from 'lucide-react';
-import { contactData, flagshipSystems } from '../data/portfolio';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  Search,
+  X,
+  ArrowRight,
+  Copy,
+  Check,
+  MessageSquare,
+  Phone,
+  Download,
+  Sun,
+  Moon,
+  Layers,
+  Cpu,
+  Briefcase,
+  Eye,
+  Link2,
+  GitBranch,
+} from 'lucide-react';
+import {
+  contactData,
+  flagshipSystems,
+  skillCategories,
+  careerTimeline,
+} from '../data/portfolio';
 import { FlagshipSystem } from '../types';
+import { buildSkillShareUrl } from '../utils/skillMatch';
 
 interface SpotlightModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectSystem: (system: FlagshipSystem) => void;
+  onSelectSystemNode?: (system: FlagshipSystem, nodeIdx: number) => void;
+  onSelectSkill?: (skill: string) => void;
+  onSelectCareer?: (careerId: string) => void;
+  onOpenResumePreview?: () => void;
+  selectedSkill?: string | null;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
 }
 
+type SpotlightCategory =
+  | 'Navigation'
+  | 'Blueprint'
+  | 'Node'
+  | 'Skill'
+  | 'Experience'
+  | 'Action';
+
 interface SpotlightItem {
   id: string;
-  category: 'Navigation' | 'Blueprint' | 'Action';
+  category: SpotlightCategory;
   title: string;
   subtitle: string;
+  keywords?: string;
   icon: React.ReactNode;
   action: () => void;
 }
+
+const CATEGORY_ORDER: SpotlightCategory[] = [
+  'Navigation',
+  'Blueprint',
+  'Node',
+  'Skill',
+  'Experience',
+  'Action',
+];
+
+const CATEGORY_LABELS: Record<SpotlightCategory, string> = {
+  Navigation: 'Navigation',
+  Blueprint: 'Blueprints',
+  Node: 'System Pipeline Nodes',
+  Skill: 'Skills & Stack',
+  Experience: 'Career Chronology',
+  Action: 'Quick Actions',
+};
 
 export const SpotlightModal: React.FC<SpotlightModalProps> = ({
   isOpen,
   onClose,
   onSelectSystem,
+  onSelectSystemNode,
+  onSelectSkill,
+  onSelectCareer,
+  onOpenResumePreview,
+  selectedSkill = null,
   theme,
   onToggleTheme,
 }) => {
@@ -33,11 +93,12 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [copiedSkillLink, setCopiedSkillLink] = useState(false);
 
   useEffect(() => {
     const handleKeyDownGlobal = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        // Global shortcut binding check
+        // Global shortcut binding handled by App.tsx
       }
     };
     window.addEventListener('keydown', handleKeyDownGlobal);
@@ -90,7 +151,27 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
     }, 1200);
   };
 
-  const allItems: SpotlightItem[] = [
+  const handleCopyActiveSkillLink = async () => {
+    if (!selectedSkill) return;
+    const url = buildSkillShareUrl(selectedSkill);
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      const input = document.createElement('input');
+      input.value = url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+    }
+    setCopiedSkillLink(true);
+    setTimeout(() => {
+      setCopiedSkillLink(false);
+      onClose();
+    }, 1200);
+  };
+
+  const curatedItems: SpotlightItem[] = [
     // Navigation items
     {
       id: 'nav-overview',
@@ -112,7 +193,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
       id: 'nav-stack',
       category: 'Navigation',
       title: 'Stack & Architecture Matrix',
-      subtitle: '30+ engineering competencies across 5 domains',
+      subtitle: '48 engineering competencies across 5 domains',
       icon: <ArrowRight className="w-4 h-4 text-[var(--accent-titanium)]" />,
       action: () => scrollTo('stack'),
     },
@@ -128,7 +209,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
       id: 'nav-contact',
       category: 'Navigation',
       title: 'Executive Coordinates & Contact',
-      subtitle: 'Email copy, WhatsApp, Viber, résumé download',
+      subtitle: 'Live PHT overlap, email copy, WhatsApp, Viber, résumé preview',
       icon: <ArrowRight className="w-4 h-4 text-[var(--accent-titanium)]" />,
       action: () => scrollTo('contact'),
     },
@@ -139,6 +220,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
       category: 'Blueprint',
       title: 'Blueprint: National Broadband Mapping',
       subtitle: '100M+ spatial points · 42,000+ geometries · PostGIS',
+      keywords: flagshipSystems[0].deepArchitecture.techStack.join(' '),
       icon: <Layers className="w-4 h-4 text-[var(--accent-titanium)]" />,
       action: () => {
         onClose();
@@ -150,6 +232,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
       category: 'Blueprint',
       title: 'Blueprint: Clinic EZ & ERP EZ Suite',
       subtitle: '20,000+ users · 100–300 DAUs · E2EE & pgvector',
+      keywords: flagshipSystems[1].deepArchitecture.techStack.join(' '),
       icon: <Layers className="w-4 h-4 text-[var(--accent-titanium)]" />,
       action: () => {
         onClose();
@@ -161,6 +244,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
       category: 'Blueprint',
       title: 'Blueprint: Institutional ETL & Validation',
       subtitle: 'RabbitMQ workers · Schema validation · Nationwide SUCs/HEIs',
+      keywords: flagshipSystems[2].deepArchitecture.techStack.join(' '),
       icon: <Layers className="w-4 h-4 text-[var(--accent-titanium)]" />,
       action: () => {
         onClose();
@@ -168,13 +252,51 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
       },
     },
 
-    // Actions
+    // Quick Actions
+    ...(onOpenResumePreview
+      ? [
+          {
+            id: 'act-preview-resume',
+            category: 'Action' as const,
+            title: 'Preview Verified Résumé (In-App)',
+            subtitle: 'Interactive 2-page specification & embedded PDF viewer',
+            keywords: 'cv curriculum vitae resume preview pdf',
+            icon: <Eye className="w-4 h-4 text-[var(--accent-titanium)]" />,
+            action: () => {
+              onClose();
+              setTimeout(() => onOpenResumePreview(), 80);
+            },
+          },
+        ]
+      : []),
+    ...(selectedSkill
+      ? [
+          {
+            id: 'act-copy-skill-link',
+            category: 'Action' as const,
+            title: copiedSkillLink
+              ? 'Skill Filter Link Copied ✓'
+              : `Copy Shareable Filter Link (?skill=${selectedSkill})`,
+            subtitle: 'Share URL pre-filtered to highlighted systems & career roles',
+            icon: copiedSkillLink ? (
+              <Check className="w-4 h-4 text-[var(--accent-signal)]" />
+            ) : (
+              <Link2 className="w-4 h-4 text-[var(--accent-titanium)]" />
+            ),
+            action: handleCopyActiveSkillLink,
+          },
+        ]
+      : []),
     {
       id: 'act-copy-email',
       category: 'Action',
       title: copied ? 'Email Copied to Clipboard ✓' : 'Copy Direct Email',
       subtitle: contactData.email,
-      icon: copied ? <Check className="w-4 h-4 text-[var(--accent-signal)]" /> : <Copy className="w-4 h-4 text-[var(--accent-titanium)]" />,
+      icon: copied ? (
+        <Check className="w-4 h-4 text-[var(--accent-signal)]" />
+      ) : (
+        <Copy className="w-4 h-4 text-[var(--accent-titanium)]" />
+      ),
       action: handleCopyEmail,
     },
     {
@@ -218,7 +340,12 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
       category: 'Action',
       title: `Switch to ${theme === 'dark' ? 'Silver Alabaster (Light)' : 'Obsidian (Dark)'} Mode`,
       subtitle: 'Persisted across sessions with zero theme flash',
-      icon: theme === 'dark' ? <Sun className="w-4 h-4 text-[var(--accent-titanium)]" /> : <Moon className="w-4 h-4 text-[var(--accent-titanium)]" />,
+      icon:
+        theme === 'dark' ? (
+          <Sun className="w-4 h-4 text-[var(--accent-titanium)]" />
+        ) : (
+          <Moon className="w-4 h-4 text-[var(--accent-titanium)]" />
+        ),
       action: () => {
         onToggleTheme();
         onClose();
@@ -226,42 +353,112 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
     },
   ];
 
-  const filteredItems = query.trim() === ''
-    ? allItems
-    : allItems.filter(
-        (item) =>
-          item.title.toLowerCase().includes(query.toLowerCase()) ||
-          item.subtitle.toLowerCase().includes(query.toLowerCase()) ||
-          item.category.toLowerCase().includes(query.toLowerCase())
-      );
+  // Build deep search entries for Skills, 15 Pipeline Nodes, and 8 Career Chronology Rows
+  const deepIndexItems = useMemo<SpotlightItem[]>(() => {
+    const nodeItems: SpotlightItem[] = flagshipSystems.flatMap((system) =>
+      system.nodes.map((node, nodeIdx) => ({
+        id: `node-${system.id}-${node.id}`,
+        category: 'Node' as const,
+        title: `${node.name.replace(/^Node \d+:\s*/, '')} — ${system.title.split('&')[0].trim()}`,
+        subtitle: `${node.tech} · ${node.guarantee}`,
+        keywords: `${node.name} ${node.role} ${node.details} ${system.title} ${system.scaleProof}`,
+        icon: <GitBranch className="w-4 h-4 text-[var(--accent-titanium)]" />,
+        action: () => {
+          onClose();
+          setTimeout(() => {
+            if (onSelectSystemNode) {
+              onSelectSystemNode(system, nodeIdx);
+            } else {
+              onSelectSystem(system);
+            }
+          }, 90);
+        },
+      }))
+    );
 
-  const categories: SpotlightItem['category'][] = ['Navigation', 'Blueprint', 'Action'];
-  const groupedItems = categories
-    .map((category) => ({
-      category,
-      label: category === 'Blueprint' ? 'Blueprints' : category === 'Action' ? 'Quick Actions' : 'Navigation',
-      items: filteredItems
-        .map((item, idx) => ({ item, idx }))
-        .filter(({ item }) => item.category === category),
-    }))
-    .filter((group) => group.items.length > 0);
+    const domainCategories = skillCategories.filter((c) => c.id !== 'all');
+    const allSkills = skillCategories.find((c) => c.id === 'all')?.skills ?? [];
+    const skillItems: SpotlightItem[] = allSkills.map((skill) => {
+      const domain = domainCategories.find((cat) => cat.skills.includes(skill));
+      return {
+        id: `skill-${skill}`,
+        category: 'Skill' as const,
+        title: skill,
+        subtitle: `${domain?.name ?? 'Core Competency'} · Filter career roles & matching systems`,
+        keywords: `${skill} ${domain?.name ?? ''}`,
+        icon: <Cpu className="w-4 h-4 text-[var(--accent-titanium)]" />,
+        action: () => {
+          onClose();
+          setTimeout(() => {
+            onSelectSkill?.(skill);
+          }, 90);
+        },
+      };
+    });
+
+    const careerItems: SpotlightItem[] = careerTimeline.map((row) => ({
+      id: `exp-${row.id}`,
+      category: 'Experience' as const,
+      title: `${row.role} · ${row.company}`,
+      subtitle: `${row.period} · ${row.location} (${row.model})`,
+      keywords: `${row.summary} ${row.technologies.join(' ')}`,
+      icon: <Briefcase className="w-4 h-4 text-[var(--accent-titanium)]" />,
+      action: () => {
+        onClose();
+        setTimeout(() => {
+          onSelectCareer?.(row.id);
+        }, 90);
+      },
+    }));
+
+    return [...nodeItems, ...skillItems, ...careerItems];
+  }, [onClose, onSelectSystem, onSelectSystemNode, onSelectSkill, onSelectCareer]);
+
+  const trimmedQuery = query.trim().toLowerCase();
+  const searchPool = trimmedQuery === '' ? curatedItems : [...curatedItems, ...deepIndexItems];
+
+  const filteredItems =
+    trimmedQuery === ''
+      ? searchPool
+      : searchPool.filter(
+          (item) =>
+            item.title.toLowerCase().includes(trimmedQuery) ||
+            item.subtitle.toLowerCase().includes(trimmedQuery) ||
+            item.category.toLowerCase().includes(trimmedQuery) ||
+            (item.keywords?.toLowerCase().includes(trimmedQuery) ?? false)
+        );
+
+  const groupedItems = CATEGORY_ORDER.map((category) => ({
+    category,
+    label: CATEGORY_LABELS[category],
+    items: filteredItems.filter((item) => item.category === category),
+  })).filter((group) => group.items.length > 0);
+
+  // Flatten groups in visual top-to-bottom order so arrow keys strictly match screen order
+  const orderedItems = groupedItems.flatMap((g) => g.items);
+  const safeSelectedIndex =
+    orderedItems.length === 0 ? 0 : Math.min(selectedIndex, orderedItems.length - 1);
 
   useEffect(() => {
     if (!isOpen) return;
-    rowRefs.current[selectedIndex]?.scrollIntoView({ block: 'nearest' });
-  }, [selectedIndex, isOpen]);
+    rowRefs.current[safeSelectedIndex]?.scrollIntoView({ block: 'nearest' });
+  }, [safeSelectedIndex, isOpen]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex((prev) => (prev + 1) % Math.max(1, filteredItems.length));
+      if (orderedItems.length > 0) {
+        setSelectedIndex((prev) => (prev + 1) % orderedItems.length);
+      }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setSelectedIndex((prev) => (prev - 1 + filteredItems.length) % Math.max(1, filteredItems.length));
+      if (orderedItems.length > 0) {
+        setSelectedIndex((prev) => (prev - 1 + orderedItems.length) % orderedItems.length);
+      }
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (filteredItems[selectedIndex]) {
-        filteredItems[selectedIndex].action();
+      if (orderedItems[safeSelectedIndex]) {
+        orderedItems[safeSelectedIndex].action();
       }
     } else if (e.key === 'Escape') {
       onClose();
@@ -305,7 +502,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
               setQuery(e.target.value);
               setSelectedIndex(0);
             }}
-            placeholder="Search sections, blueprints, or actions..."
+            placeholder="Search sections, blueprints, 48+ skills, roles, or actions..."
             className="w-full bg-transparent border-none text-base sm:text-[19px] font-normal tracking-[-0.02em] leading-snug text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none"
             aria-label="Spotlight search input"
           />
@@ -335,65 +532,69 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
 
         {/* Grouped Typographic Results */}
         <div className="px-3 pb-3 pt-1 overflow-y-auto overscroll-contain">
-          {filteredItems.length === 0 ? (
+          {orderedItems.length === 0 ? (
             <div className="py-14 text-center text-sm tracking-[-0.01em] text-[var(--text-secondary)]">
-              No matching sections, blueprints, or actions.
+              No matching sections, blueprints, skills, roles, or actions.
             </div>
           ) : (
-            groupedItems.map((group) => (
-              <div key={group.category} className="mb-1 last:mb-0">
-                <div className="px-3 pt-3 pb-1 text-[10px] font-mono uppercase tracking-[0.14em] text-[var(--text-tertiary)] select-none">
-                  {group.label}
-                </div>
-                <div className="space-y-0.5">
-                  {group.items.map(({ item, idx }) => {
-                    const isSelected = selectedIndex === idx;
-                    return (
-                      <button
-                        key={item.id}
-                        ref={(el) => {
-                          rowRefs.current[idx] = el;
-                        }}
-                        onClick={item.action}
-                        onMouseEnter={() => setSelectedIndex(idx)}
-                        className={`w-full text-left px-3 py-2.5 rounded-xl flex items-center justify-between gap-4 transition-colors ${
-                          isSelected
-                            ? 'bg-[var(--surface-card-strong)] text-[var(--text-primary)]'
-                            : 'text-[var(--text-secondary)] hover:bg-[var(--surface-card)] hover:text-[var(--text-primary)]'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span
-                            className={`shrink-0 transition-opacity ${
-                              isSelected ? 'opacity-100' : 'opacity-70'
-                            }`}
-                          >
-                            {item.icon}
-                          </span>
-                          <div className="min-w-0">
-                            <div className="text-[13.5px] sm:text-sm font-medium tracking-[-0.015em] text-[var(--text-primary)] truncate">
-                              {item.title}
-                            </div>
-                            <div className="text-xs tracking-[-0.005em] text-[var(--text-secondary)] truncate mt-0.5">
-                              {item.subtitle}
-                            </div>
-                          </div>
-                        </div>
-
-                        <span
-                          aria-hidden="true"
-                          className={`text-[11px] font-mono text-[var(--accent-titanium)] shrink-0 transition-opacity ${
-                            isSelected ? 'opacity-100' : 'opacity-0'
+            (() => {
+              let runningIdx = 0;
+              return groupedItems.map((group) => (
+                <div key={group.category} className="mb-1 last:mb-0">
+                  <div className="px-3 pt-3 pb-1 text-[10px] font-mono uppercase tracking-[0.14em] text-[var(--text-tertiary)] select-none">
+                    {group.label}
+                  </div>
+                  <div className="space-y-0.5">
+                    {group.items.map((item) => {
+                      const idx = runningIdx++;
+                      const isSelected = safeSelectedIndex === idx;
+                      return (
+                        <button
+                          key={item.id}
+                          ref={(el) => {
+                            rowRefs.current[idx] = el;
+                          }}
+                          onClick={item.action}
+                          onMouseEnter={() => setSelectedIndex(idx)}
+                          className={`w-full text-left px-3 py-2.5 rounded-xl flex items-center justify-between gap-4 transition-colors ${
+                            isSelected
+                              ? 'bg-[var(--surface-card-strong)] text-[var(--text-primary)]'
+                              : 'text-[var(--text-secondary)] hover:bg-[var(--surface-card)] hover:text-[var(--text-primary)]'
                           }`}
                         >
-                          ↵
-                        </span>
-                      </button>
-                    );
-                  })}
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span
+                              className={`shrink-0 transition-opacity ${
+                                isSelected ? 'opacity-100' : 'opacity-70'
+                              }`}
+                            >
+                              {item.icon}
+                            </span>
+                            <div className="min-w-0">
+                              <div className="text-[13.5px] sm:text-sm font-medium tracking-[-0.015em] text-[var(--text-primary)] truncate">
+                                {item.title}
+                              </div>
+                              <div className="text-xs tracking-[-0.005em] text-[var(--text-secondary)] truncate mt-0.5">
+                                {item.subtitle}
+                              </div>
+                            </div>
+                          </div>
+
+                          <span
+                            aria-hidden="true"
+                            className={`text-[11px] font-mono text-[var(--accent-titanium)] shrink-0 transition-opacity ${
+                              isSelected ? 'opacity-100' : 'opacity-0'
+                            }`}
+                          >
+                            ↵
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            ))
+              ));
+            })()
           )}
         </div>
 
@@ -402,8 +603,9 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
           <div className="flex items-center gap-4">
             <span>↑↓ Navigate</span>
             <span>↵ Open</span>
+            {trimmedQuery === '' && <span className="hidden sm:inline">Type to search 48 skills, 15 nodes &amp; 8 roles</span>}
           </div>
-          <span>{filteredItems.length} {filteredItems.length === 1 ? 'result' : 'results'}</span>
+          <span>{orderedItems.length} {orderedItems.length === 1 ? 'result' : 'results'}</span>
         </div>
       </div>
     </dialog>

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Layers, X, Briefcase, GraduationCap, Calendar } from 'lucide-react';
+import { Layers, X, Briefcase, GraduationCap, Calendar, Link2, Check } from 'lucide-react';
 import { skillCategories, careerTimeline } from '../data/portfolio';
+import { buildSkillShareUrl, careerMatchesSkill, skillsMatch } from '../utils/skillMatch';
 
 interface ExperienceSpecProps {
   selectedSkill?: string | null;
   onSelectSkill?: (skill: string | null) => void;
+  highlightedCareerId?: string | null;
 }
 
 function splitRoleAndType(role: string, isEducation?: boolean): { title: string; employmentType: string | null } {
@@ -18,14 +20,33 @@ function splitRoleAndType(role: string, isEducation?: boolean): { title: string;
 export const ExperienceSpec: React.FC<ExperienceSpecProps> = ({
   selectedSkill: externalSkill,
   onSelectSkill: externalOnSelect,
+  highlightedCareerId = null,
 }) => {
   const [internalSkill, setInternalSkill] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('all');
+  const [copiedShare, setCopiedShare] = useState(false);
 
   const selectedSkill = externalSkill !== undefined ? externalSkill : internalSkill;
   const onSelectSkill = externalOnSelect || setInternalSkill;
 
   const currentCategory = skillCategories.find((c) => c.id === activeTab) || skillCategories[0];
+
+  const handleCopySkillLink = async () => {
+    if (!selectedSkill) return;
+    const shareUrl = buildSkillShareUrl(selectedSkill);
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      const input = document.createElement('input');
+      input.value = shareUrl;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+    }
+    setCopiedShare(true);
+    window.setTimeout(() => setCopiedShare(false), 2200);
+  };
 
   return (
     <section id="experience" className="relative py-24 px-6 max-w-6xl mx-auto select-none">
@@ -72,13 +93,35 @@ export const ExperienceSpec: React.FC<ExperienceSpecProps> = ({
         ))}
 
         {selectedSkill && (
-          <button
-            onClick={() => onSelectSkill(null)}
-            className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono text-[var(--accent-titanium)] bg-[var(--surface-card)] border border-[var(--border-subtle)] hover:bg-[var(--surface-card-strong)] transition-colors"
-          >
-            <span>Highlighted: {selectedSkill}</span>
-            <X className="w-3 h-3" />
-          </button>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCopySkillLink}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-[var(--surface-card)] border border-[var(--border-hairline)] hover:border-[var(--border-subtle)] transition-colors"
+              aria-label="Copy shareable URL for active skill filter"
+            >
+              {copiedShare ? (
+                <>
+                  <Check className="w-3 h-3 text-[var(--accent-signal)]" />
+                  <span className="text-[var(--accent-signal)]">Link Copied</span>
+                </>
+              ) : (
+                <>
+                  <Link2 className="w-3 h-3 text-[var(--accent-titanium)]" />
+                  <span>Copy Filter Link</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => onSelectSkill(null)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-mono text-[var(--accent-titanium)] bg-[var(--surface-card)] border border-[var(--border-subtle)] hover:bg-[var(--surface-card-strong)] transition-colors"
+            >
+              <span>Highlighted: {selectedSkill}</span>
+              <X className="w-3 h-3" />
+            </button>
+          </div>
         )}
       </div>
 
@@ -93,7 +136,7 @@ export const ExperienceSpec: React.FC<ExperienceSpecProps> = ({
 
         <div className="flex flex-wrap gap-2">
           {currentCategory.skills.map((skill) => {
-            const isSelected = selectedSkill === skill;
+            const isSelected = selectedSkill ? skillsMatch(skill, selectedSkill) : false;
             return (
               <button
                 key={skill}
@@ -130,15 +173,15 @@ export const ExperienceSpec: React.FC<ExperienceSpecProps> = ({
           </thead>
           <tbody className="divide-y divide-[var(--border-hairline)]">
             {careerTimeline.map((row) => {
-              const isMatch = selectedSkill
-                ? row.technologies.some((t) => t.toLowerCase() === selectedSkill.toLowerCase())
-                : false;
+              const isMatch =
+                careerMatchesSkill(row, selectedSkill) || highlightedCareerId === row.id;
               const { title: displayRole, employmentType } = splitRoleAndType(row.role, row.isEducation);
 
               return (
                 <tr
                   key={row.id}
-                  className={`transition-all duration-300 ${
+                  id={row.id}
+                  className={`scroll-mt-28 transition-all duration-300 ${
                     isMatch
                       ? 'bg-[var(--border-subtle)] shadow-inner ring-1 ring-[var(--accent-titanium)]'
                       : 'hover:bg-[var(--border-hairline)]'
@@ -171,19 +214,20 @@ export const ExperienceSpec: React.FC<ExperienceSpecProps> = ({
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {row.technologies.map((tech) => {
-                        const isTechMatch =
-                          selectedSkill?.toLowerCase() === tech.toLowerCase();
+                        const isTechMatch = selectedSkill ? skillsMatch(tech, selectedSkill) : false;
                         return (
-                          <span
+                          <button
                             key={tech}
-                            className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
+                            type="button"
+                            onClick={() => onSelectSkill(isTechMatch ? null : tech)}
+                            className={`px-2 py-0.5 rounded text-[10px] font-mono border transition-colors cursor-pointer ${
                               isTechMatch
                                 ? 'bg-[var(--accent-titanium)] text-[var(--bg-primary)] font-semibold border-[var(--accent-titanium)]'
-                                : 'bg-[var(--border-hairline)] text-[var(--text-tertiary)] border-[var(--border-hairline)]'
+                                : 'bg-[var(--border-hairline)] text-[var(--text-tertiary)] border-[var(--border-hairline)] hover:text-[var(--text-primary)] hover:border-[var(--border-subtle)]'
                             }`}
                           >
                             {tech}
-                          </span>
+                          </button>
                         );
                       })}
                     </div>
@@ -201,15 +245,15 @@ export const ExperienceSpec: React.FC<ExperienceSpecProps> = ({
         {/* Mobile Stacked Spec Cards */}
         <div className="space-y-4 md:hidden">
           {careerTimeline.map((row) => {
-            const isMatch = selectedSkill
-              ? row.technologies.some((t) => t.toLowerCase() === selectedSkill.toLowerCase())
-              : false;
+            const isMatch =
+              careerMatchesSkill(row, selectedSkill) || highlightedCareerId === row.id;
             const { title: displayRole, employmentType } = splitRoleAndType(row.role, row.isEducation);
 
             return (
               <div
                 key={row.id}
-                className={`p-5 rounded-2xl border transition-all duration-300 ${
+                id={`mobile-${row.id}`}
+                className={`scroll-mt-24 p-5 rounded-2xl border transition-all duration-300 ${
                   isMatch
                     ? 'bg-[var(--border-subtle)] border-[var(--accent-titanium)] ring-1 ring-[var(--accent-titanium)]'
                     : 'bg-[var(--border-hairline)] border-[var(--border-hairline)]'
@@ -247,19 +291,20 @@ export const ExperienceSpec: React.FC<ExperienceSpecProps> = ({
 
                 <div className="flex flex-wrap gap-1.5">
                   {row.technologies.map((tech) => {
-                    const isTechMatch =
-                      selectedSkill?.toLowerCase() === tech.toLowerCase();
+                    const isTechMatch = selectedSkill ? skillsMatch(tech, selectedSkill) : false;
                     return (
-                      <span
+                      <button
                         key={tech}
-                        className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
+                        type="button"
+                        onClick={() => onSelectSkill(isTechMatch ? null : tech)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-mono border transition-colors cursor-pointer ${
                           isTechMatch
                             ? 'bg-[var(--accent-titanium)] text-[var(--bg-primary)] font-semibold border-[var(--accent-titanium)]'
-                            : 'bg-[var(--border-hairline)] text-[var(--text-tertiary)] border-[var(--border-hairline)]'
+                            : 'bg-[var(--border-hairline)] text-[var(--text-tertiary)] border-[var(--border-hairline)] hover:text-[var(--text-primary)]'
                         }`}
                       >
                         {tech}
-                      </span>
+                      </button>
                     );
                   })}
                 </div>

@@ -940,6 +940,77 @@ async function main() {
     assert.ok(canvasCode.includes('ripple') && canvasCode.includes('envelope'), 'Pointer click ripple wave physics missing');
   });
 
+  suite('Tier 1 & 3: Top 3 Upgrades — Deep Spotlight, SVG Topology Trace & Live Timezone / Resume Preview');
+
+  await runTest('T1-UPG-01', 'Zero-dependency skillMatch.ts and timezone.ts utilities exported in src/utils/', 1, 'Upgrades', async () => {
+    const skillMatchFile = path.join(srcDir, 'utils', 'skillMatch.ts');
+    const timezoneFile = path.join(srcDir, 'utils', 'timezone.ts');
+    assert.ok(existsSync(skillMatchFile), 'src/utils/skillMatch.ts missing');
+    assert.ok(existsSync(timezoneFile), 'src/utils/timezone.ts missing');
+
+    const skillCode = await safeReadFile(skillMatchFile);
+    assert.ok(skillCode.includes('export function skillsMatch'), 'skillsMatch export missing');
+    assert.ok(skillCode.includes('export function resolveCanonicalSkill'), 'resolveCanonicalSkill export missing');
+    assert.ok(skillCode.includes('export function systemMatchesSkill'), 'systemMatchesSkill export missing');
+
+    const tzCode = await safeReadFile(timezoneFile);
+    assert.ok(tzCode.includes('export function getTimezoneSnapshot'), 'getTimezoneSnapshot export missing');
+    assert.ok(tzCode.includes('Asia/Manila'), 'Asia/Manila timezone calculation missing');
+  });
+
+  await runTest('T1-UPG-02', 'SpotlightModal deep-indexes skills, 15 system nodes, and 8 career rows', 1, 'Upgrades', async () => {
+    const spotlightCode = await safeReadFile(path.join(srcDir, 'components', 'SpotlightModal.tsx'));
+    assert.ok(spotlightCode.includes('skillCategories'), 'SpotlightModal does not index skillCategories');
+    assert.ok(spotlightCode.includes('careerTimeline'), 'SpotlightModal does not index careerTimeline');
+    assert.ok(spotlightCode.includes('system.nodes'), 'SpotlightModal does not index system nodes');
+    assert.ok(spotlightCode.includes('onOpenResumePreview'), 'SpotlightModal missing in-app resume preview action');
+  });
+
+  await runTest('T1-UPG-03', 'SystemTopologySvg hairline schematic & interactive traceScenarios simulator in ArchitectureSheet', 1, 'Upgrades', async () => {
+    const topoFile = path.join(srcDir, 'components', 'SystemTopologySvg.tsx');
+    assert.ok(existsSync(topoFile), 'src/components/SystemTopologySvg.tsx missing');
+    const topoCode = await safeReadFile(topoFile);
+    assert.ok(topoCode.includes('<svg') && topoCode.includes('activeScenario'), 'SVG topology schematic missing');
+
+    const sheetCode = await safeReadFile(path.join(srcDir, 'components', 'ArchitectureSheet.tsx'));
+    assert.ok(sheetCode.includes('SystemTopologySvg'), 'ArchitectureSheet does not render SystemTopologySvg');
+    assert.ok(sheetCode.includes('traceScenarios') && sheetCode.includes('Simulate Trace'), 'Interactive trace simulator controls missing');
+
+    const dataCode = await safeReadFile(path.join(srcDir, 'data', 'portfolio.ts'));
+    const scenarioMatches = [...dataCode.matchAll(/traceScenarios:\s*\[/g)];
+    assert.strictEqual(scenarioMatches.length, 3, `Expected traceScenarios on all 3 flagship systems, found ${scenarioMatches.length}`);
+  });
+
+  await runTest('T1-UPG-04', 'ResumePreviewModal native <dialog> dual-mode spec & PDF preview component', 1, 'Upgrades', async () => {
+    const resumeModalFile = path.join(srcDir, 'components', 'ResumePreviewModal.tsx');
+    assert.ok(existsSync(resumeModalFile), 'src/components/ResumePreviewModal.tsx missing');
+    const code = await safeReadFile(resumeModalFile);
+    assert.ok(code.includes('<dialog') && code.includes('showModal()'), 'Native <dialog> showModal() missing in ResumePreviewModal');
+    assert.ok(code.includes('getBoundingClientRect') && code.includes('onCancel={onClose}'), 'Light-dismiss or Escape cancel missing in ResumePreviewModal');
+    assert.ok(code.includes('Interactive 2-Page') && code.includes('Original PDF'), 'Dual Interactive / PDF mode switcher missing');
+  });
+
+  await runTest('T3-UPG-05', 'URL ?skill= synchronization & cross-highlighting across App, Hero, SystemSection, and ExperienceSpec', 3, 'Upgrades', async () => {
+    const appCode = await safeReadFile(path.join(srcDir, 'App.tsx'));
+    assert.ok(appCode.includes('URLSearchParams') && appCode.includes("get('skill')"), 'App.tsx missing URL ?skill= hydration');
+    assert.ok(appCode.includes('ResumePreviewModal') && appCode.includes('isModalOpen = isSpotlightOpen || isResumeOpen'), 'App.tsx must unify modal wake pause across Spotlight and Resume modals');
+
+    const heroCode = await safeReadFile(path.join(srcDir, 'components', 'Hero.tsx'));
+    assert.ok(heroCode.includes('onSelectSkill') && heroCode.includes('onPreviewResume'), 'Hero.tsx missing clickable marquee or resume preview trigger');
+
+    const sysCode = await safeReadFile(path.join(srcDir, 'components', 'SystemSection.tsx'));
+    assert.ok(sysCode.includes('systemMatchesSkill') && sysCode.includes('Matches ·'), 'SystemSection.tsx missing skill cross-highlight badge');
+
+    const expCode = await safeReadFile(path.join(srcDir, 'components', 'ExperienceSpec.tsx'));
+    assert.ok(expCode.includes('buildSkillShareUrl') && expCode.includes('Copy Filter Link'), 'ExperienceSpec.tsx missing shareable skill URL copy control');
+  });
+
+  await runTest('T3-UPG-06', 'ContactCard live PHT timezone overlap telemetry and in-app résumé preview trigger', 3, 'Upgrades', async () => {
+    const contactCode = await safeReadFile(path.join(srcDir, 'components', 'ContactCard.tsx'));
+    assert.ok(contactCode.includes('getTimezoneSnapshot') && contactCode.includes('PHT'), 'ContactCard missing live PHT clock & overlap snapshot');
+    assert.ok(contactCode.includes('onPreviewResume') && contactCode.includes('Preview'), 'ContactCard missing in-app résumé preview trigger');
+  });
+
   // ----------------------------------------------------------------------------
   // TIER 4: Real-World Workload & Build Verification (>= 5 tests = 5 tests)
   // ----------------------------------------------------------------------------

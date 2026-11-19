@@ -7,8 +7,12 @@ import { ArchitectureSheet } from './components/ArchitectureSheet';
 import { ExperienceSpec } from './components/ExperienceSpec';
 import { ContactCard } from './components/ContactCard';
 import { SpotlightModal } from './components/SpotlightModal';
-import { flagshipSystems } from './data/portfolio';
+import { ResumePreviewModal } from './components/ResumePreviewModal';
+import { flagshipSystems, skillCategories } from './data/portfolio';
 import { FlagshipSystem } from './types';
+import { resolveCanonicalSkill } from './utils/skillMatch';
+
+const ALL_SKILLS = skillCategories.find((c) => c.id === 'all')?.skills ?? [];
 
 function resolveSystemFromHash(): FlagshipSystem | null {
   if (typeof window === 'undefined') return null;
@@ -16,6 +20,12 @@ function resolveSystemFromHash(): FlagshipSystem | null {
   if (!hash.startsWith('#blueprint-')) return null;
   const targetId = hash.slice('#blueprint-'.length);
   return flagshipSystems.find((sys) => sys.id === targetId) ?? null;
+}
+
+function resolveSkillFromSearch(): string | null {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  return resolveCanonicalSkill(params.get('skill'), ALL_SKILLS);
 }
 
 export const App: React.FC = () => {
@@ -31,17 +41,42 @@ export const App: React.FC = () => {
   const [architectureSystem, setArchitectureSystem] = useState<FlagshipSystem | null>(() =>
     resolveSystemFromHash()
   );
+  const [architectureNodeIdx, setArchitectureNodeIdx] = useState<number>(0);
+  const [selectedSkill, setSelectedSkill] = useState<string | null>(() =>
+    resolveSkillFromSearch()
+  );
+  const [highlightedCareerId, setHighlightedCareerId] = useState<string | null>(null);
   const [isSpotlightOpen, setIsSpotlightOpen] = useState(false);
+  const [isResumeOpen, setIsResumeOpen] = useState(false);
 
   const savedScrollYRef = useRef(0);
+  const careerHighlightTimerRef = useRef<number | null>(null);
   const activeSystemRef = useRef<FlagshipSystem | null>(architectureSystem);
   activeSystemRef.current = architectureSystem;
+
+  const isModalOpen = isSpotlightOpen || isResumeOpen;
 
   // Synchronize data-theme on <html> element
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('wave-theme', theme);
   }, [theme]);
+
+  // Synchronize selectedSkill to ?skill= URL query parameter without clobbering hashes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const currentParam = url.searchParams.get('skill');
+    if (selectedSkill) {
+      if (currentParam !== selectedSkill) {
+        url.searchParams.set('skill', selectedSkill);
+        window.history.replaceState(window.history.state, '', url.toString());
+      }
+    } else if (currentParam !== null) {
+      url.searchParams.delete('skill');
+      window.history.replaceState(window.history.state, '', url.toString());
+    }
+  }, [selectedSkill]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -52,6 +87,7 @@ export const App: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
+        setIsResumeOpen(false);
         setIsSpotlightOpen((prev) => !prev);
       }
     };
@@ -60,12 +96,14 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Support browser back/forward navigation between root overview and full-page blueprints
+  // Support browser back/forward navigation between root overview, URL ?skill= state, and blueprints
   useEffect(() => {
     const handlePopState = () => {
       const nextSystem = resolveSystemFromHash();
       const wasOpen = Boolean(activeSystemRef.current);
       setArchitectureSystem(nextSystem);
+      setArchitectureNodeIdx(0);
+      setSelectedSkill(resolveSkillFromSearch());
       if (wasOpen && !nextSystem) {
         requestAnimationFrame(() => {
           window.scrollTo(0, savedScrollYRef.current);
@@ -77,19 +115,30 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const handleOpenSystem = useCallback((system: FlagshipSystem) => {
+  useEffect(() => {
+    return () => {
+      if (careerHighlightTimerRef.current !== null) {
+        window.clearTimeout(careerHighlightTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleOpenSystem = useCallback((system: FlagshipSystem, nodeIdx = 0) => {
     if (!activeSystemRef.current) {
       savedScrollYRef.current = window.scrollY;
     }
+    setArchitectureNodeIdx(nodeIdx);
     setArchitectureSystem(system);
-    const targetHash = `#blueprint-${system.id}`;
-    if (window.location.hash !== targetHash) {
-      window.history.pushState({ systemId: system.id }, '', targetHash);
+    const url = new URL(window.location.href);
+    url.hash = `#blueprint-${system.id}`;
+    if (window.location.hash !== url.hash) {
+      window.history.pushState({ systemId: system.id }, '', url.toString());
     }
   }, []);
 
   const handleCloseSystem = useCallback(() => {
     setArchitectureSystem(null);
+    setArchitectureNodeIdx(0);
     if (window.location.hash.startsWith('#blueprint-')) {
       window.history.pushState(null, '', window.location.pathname + window.location.search);
     }
@@ -98,15 +147,60 @@ export const App: React.FC = () => {
     });
   }, []);
 
+  const handleSelectSkillAndScroll = useCallback((skill: string) => {
+    const canonical = resolveCanonicalSkill(skill, ALL_SKILLS);
+    setSelectedSkill(canonical);
+    if (activeSystemRef.current) {
+      setArchitectureSystem(null);
+      setArchitectureNodeIdx(0);
+      if (window.location.hash.startsWith('#blueprint-')) {
+        window.history.pushState(null, '', window.location.pathname + window.location.search);
+      }
+    }
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        document.getElementById('stack')?.scrollIntoView({ behavior: 'smooth' });
+      }, 60);
+    });
+  }, []);
+
+  const handleSelectCareer = useCallback((careerId: string) => {
+    if (activeSystemRef.current) {
+      setArchitectureSystem(null);
+      setArchitectureNodeIdx(0);
+      if (window.location.hash.startsWith('#blueprint-')) {
+        window.history.pushState(null, '', window.location.pathname + window.location.search);
+      }
+    }
+    setHighlightedCareerId(careerId);
+    if (careerHighlightTimerRef.current !== null) {
+      window.clearTimeout(careerHighlightTimerRef.current);
+    }
+    careerHighlightTimerRef.current = window.setTimeout(() => {
+      setHighlightedCareerId(null);
+    }, 3400);
+
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        const isMobile = window.matchMedia('(max-width: 767px)').matches;
+        const target =
+          document.getElementById(isMobile ? `mobile-${careerId}` : careerId) ??
+          document.getElementById('experience');
+        target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 60);
+    });
+  }, []);
+
   return (
     <div className="relative min-h-screen selection:bg-[var(--accent-titanium)]/20 selection:text-[var(--accent-titanium)]">
       {/* Subtly animated ordered pattern grid with cursor repulsion & ripple physics across all views */}
-      <ParticleField theme={theme} isModalOpen={isSpotlightOpen} />
+      <ParticleField theme={theme} isModalOpen={isModalOpen} />
 
       {architectureSystem ? (
         <ArchitectureSheet
           system={architectureSystem}
-          onSelectSystem={handleOpenSystem}
+          initialNodeIdx={architectureNodeIdx}
+          onSelectSystem={(sys) => handleOpenSystem(sys, 0)}
           onClose={handleCloseSystem}
         />
       ) : (
@@ -120,13 +214,25 @@ export const App: React.FC = () => {
 
           {/* Main Content Flow */}
           <main className="relative z-10">
-            <Hero />
+            <Hero
+              selectedSkill={selectedSkill}
+              onSelectSkill={handleSelectSkillAndScroll}
+              onPreviewResume={() => setIsResumeOpen(true)}
+            />
 
-            <SystemSection onOpenArchitectureSheet={handleOpenSystem} />
+            <SystemSection
+              onOpenArchitectureSheet={(sys) => handleOpenSystem(sys, 0)}
+              selectedSkill={selectedSkill}
+              onSelectSkill={setSelectedSkill}
+            />
 
-            <ExperienceSpec />
+            <ExperienceSpec
+              selectedSkill={selectedSkill}
+              onSelectSkill={setSelectedSkill}
+              highlightedCareerId={highlightedCareerId}
+            />
 
-            <ContactCard />
+            <ContactCard onPreviewResume={() => setIsResumeOpen(true)} />
           </main>
 
           {/* Footer */}
@@ -143,9 +249,20 @@ export const App: React.FC = () => {
       <SpotlightModal
         isOpen={isSpotlightOpen}
         onClose={() => setIsSpotlightOpen(false)}
-        onSelectSystem={handleOpenSystem}
+        onSelectSystem={(sys) => handleOpenSystem(sys, 0)}
+        onSelectSystemNode={handleOpenSystem}
+        onSelectSkill={handleSelectSkillAndScroll}
+        onSelectCareer={handleSelectCareer}
+        onOpenResumePreview={() => setIsResumeOpen(true)}
+        selectedSkill={selectedSkill}
         theme={theme}
         onToggleTheme={toggleTheme}
+      />
+
+      {/* In-App Résumé Preview Modal */}
+      <ResumePreviewModal
+        isOpen={isResumeOpen}
+        onClose={() => setIsResumeOpen(false)}
       />
     </div>
   );
