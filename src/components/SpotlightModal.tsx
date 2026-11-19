@@ -206,7 +206,7 @@ export const SpotlightModal: React.FC<SpotlightModalProps> = ({
       id: 'nav-contact',
       category: 'Navigation',
       title: 'Executive Coordinates & Contact',
-      subtitle: 'Live PHT overlap, email copy, WhatsApp, Viber, résumé download',
+      subtitle: 'Live PHT clock, email copy, WhatsApp, Viber, résumé download',
       icon: <ArrowRight className="w-4 h-4 text-[var(--accent-titanium)]" />,
       action: () => scrollTo('contact'),
     },

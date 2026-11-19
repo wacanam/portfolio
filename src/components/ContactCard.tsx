@@ -235,7 +235,7 @@ export const ContactCard: React.FC = () => {
               </a>
             </div>
 
-            {/* Geographic Coordinates, Live PHT Clock & Visitor Overlap */}
+            {/* Geographic Coordinates & Live PHT Clock */}
             <div className="p-4 rounded-2xl bg-[var(--border-hairline)] border border-[var(--border-hairline)] flex flex-col gap-2 text-xs text-[var(--text-secondary)]">
               <div className="flex items-center gap-2 text-[var(--accent-titanium)] font-mono font-medium">
                 <MapPin className="w-3.5 h-3.5 shrink-0" />
@@ -252,12 +252,9 @@ export const ContactCard: React.FC = () => {
                 <span className="text-[var(--text-secondary)]">{tzSnapshot.offsetDeltaLabel}</span>
               </div>
 
-              <div className="flex items-start gap-2 text-[var(--accent-signal)] font-mono text-[11px] pt-1 border-t border-[var(--border-hairline)]">
-                <Globe className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                <div className="flex flex-col gap-0.5">
-                  <span>{contactData.availability}</span>
-                  <span className="text-[var(--text-secondary)]">{tzSnapshot.overlapSummary}</span>
-                </div>
+              <div className="flex items-center gap-2 text-[var(--accent-signal)] font-mono text-[11px] pt-1 border-t border-[var(--border-hairline)]">
+                <Globe className="w-3.5 h-3.5 shrink-0" />
+                <span>{contactData.availability}</span>
               </div>
             </div>
           </div>

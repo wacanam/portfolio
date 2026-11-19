@@ -940,7 +940,7 @@ async function main() {
     assert.ok(canvasCode.includes('ripple') && canvasCode.includes('envelope'), 'Pointer click ripple wave physics missing');
   });
 
-  suite('Tier 1 & 3: Portfolio Upgrades — Deep Spotlight, URL Skill Sync & Live Timezone Overlap');
+  suite('Tier 1 & 3: Portfolio Upgrades — Deep Spotlight, URL Skill Sync & Live PHT Clock');
 
   await runTest('T1-UPG-01', 'Zero-dependency skillMatch.ts and timezone.ts utilities exported in src/utils/', 1, 'Upgrades', async () => {
     const skillMatchFile = path.join(srcDir, 'utils', 'skillMatch.ts');
@@ -979,9 +979,9 @@ async function main() {
     assert.ok(expCode.includes('buildSkillShareUrl') && expCode.includes('Copy Filter Link'), 'ExperienceSpec.tsx missing shareable skill URL copy control');
   });
 
-  await runTest('T3-UPG-06', 'ContactCard live PHT timezone overlap telemetry', 3, 'Upgrades', async () => {
+  await runTest('T3-UPG-06', 'ContactCard live PHT clock & timezone offset telemetry', 3, 'Upgrades', async () => {
     const contactCode = await safeReadFile(path.join(srcDir, 'components', 'ContactCard.tsx'));
-    assert.ok(contactCode.includes('getTimezoneSnapshot') && contactCode.includes('PHT'), 'ContactCard missing live PHT clock & overlap snapshot');
+    assert.ok(contactCode.includes('getTimezoneSnapshot') && contactCode.includes('PHT'), 'ContactCard missing live PHT clock & timezone offset telemetry');
   });
 
   // ----------------------------------------------------------------------------
